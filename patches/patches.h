@@ -2,7 +2,8 @@
 #define __PATCHES_H__
 
 // What every patch includes: the sections N64Recomp reads a patch's role from, the natives (syms.ld) and libultra's
-// headers from the decomp (lib/mariogolf64/include). A patch includes the decomp's own headers for the rest (common.h).
+// headers (lib/ultralib/include, the ultralib the decomp builds against). A patch includes the decomp's own headers for
+// the rest (common.h).
 
 #define RECOMP_EXPORT __attribute__((section(".recomp_export")))
 #define RECOMP_PATCH __attribute__((section(".recomp_patch")))

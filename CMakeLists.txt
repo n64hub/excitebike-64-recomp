@@ -1,4 +1,4 @@
-# Mario Golf: Recompiled: the recompiled game (RecompiledFuncs/, from tools/recompile.sh), the patches over it
+# Excitebike 64: Recompiled: the recompiled game (RecompiledFuncs/, from tools/recompile.sh), the patches over it
 # (patches/, PatchesLib), and RecompFrontend's launcher and menus on RT64. The desktop program, and with Emscripten
 # (emcmake cmake; tools/build_web.sh) the page, Excitebike64Recompiled.html, through lib/N64Recomp-browser/frontend
 # (docs/web.md).
@@ -81,31 +81,11 @@ set(ULTRAMODERN_VIS_WAIT_FOR_RENDERER ON)
 # RT64 interpolates the RSP tasks the game draws a frame in as one frame (RT64_GAME_FRAME_WORKLOADS), on with
 # Emscripten and here on the desktop too, so the desktop build draws as the page does.
 set(RT64_GAME_FRAME_WORKLOADS ON)
-# The game gives its draws no matrix groups, so RT64 pairs what it draws from frame to frame itself: here on the desktop
-# too, as with Emscripten, a camera cut pairs nothing across the cut (RT64_SKIP_CAMERA_CUTS), or its frames between
-# drew the trees stretched as the camera cuts from the golfer to the ball, and a tree pairs with none at another place
-# that stood still in both frames (RT64_SKIP_PLACE_SWAPS), or they drew the trees, which the game draws in another
-# order each frame, out on the fairway in a flyover and jumping about as a shot is aimed. The far hills behind a
-# course are 2D strips whose texture the game scrolls as the camera turns and which it moves up and down as the camera
-# pitches, so RT64 slides the texture and moves the strips in the frames between (RT64_INTERPOLATE_RECT_SCROLLS), or
-# they stepped a game frame at a time against the trees and fairway in front.
-set(RT64_SKIP_CAMERA_CUTS ON)
-set(RT64_SKIP_PLACE_SWAPS ON)
-set(RT64_INTERPOLATE_RECT_SCROLLS ON)
-# The game projects the pin's flagstick itself and writes where its corners land (G_MODIFYVTX's XYSCREEN): here on the
-# desktop too, as with Emscripten, RT64 scales those screen positions for Aspect Ratio Expand as it scales its
-# projections (RT64_EXPAND_SCREEN_VERTICES), or in a picture wider than 4:3 the flagstick stood away from the hole and
-# from the pin's marker, further out the further it was from the picture's middle.
-set(RT64_EXPAND_SCREEN_VERTICES ON)
-# The game reads and writes through a TLB-mapped window at 0x02000000 (src/game/tlb.cpp), which the runtime backs with
-# memory of its own: on the web the window RECOMP_KUSEG_WINDOW places after RDRAM (N64Recomp's recomp.h). Defined for
-# every target, the runtime's too, so that each maps KUSEG the same way.
-add_compile_definitions(RECOMP_KUSEG_WINDOW)
 # Up to four players, each a port of their own (src/main/main.cpp, get_connected_device_info): the game turns
 # RecompFrontend's single-player mode off, and plays as single-player mode until players are assigned, as with
 # Emscripten, so a player alone needn't assign their pad or keyboard first. And until then each pad plays a port of its
 # own, in the order they were connected, the keyboard port 1 (RecompFrontend-web's option): four people with four pads
-# play four golfers without assigning them.
+# race four riders without assigning them.
 set(RECOMPINPUT_SINGLE_PLAYER_UNTIL_ASSIGNED ON)
 set(RECOMPINPUT_PADS_IN_ORDER ON)
 add_compile_definitions(HLSL_CPU)
@@ -135,8 +115,7 @@ endif()
 
 target_include_directories(rt64 PRIVATE ${CMAKE_BINARY_DIR}/rt64/src)
 
-# RecompiledFuncs: the game's code, from N64Recomp us.toml, and its audio microcode, from RSPRecomp n_aspMain.us.toml
-# (tools/recompile.sh)
+# RecompiledFuncs: the game's code, from N64Recomp us.toml (tools/recompile.sh)
 add_library(RecompiledFuncs STATIC)
 
 target_compile_options(RecompiledFuncs PRIVATE
@@ -237,15 +216,7 @@ target_sources(Excitebike64Recompiled PRIVATE
     ${CMAKE_SOURCE_DIR}/src/main/crash_trace.cpp
     ${CMAKE_SOURCE_DIR}/src/main/register_overlays.cpp
     ${CMAKE_SOURCE_DIR}/src/game/config.cpp
-    ${CMAKE_SOURCE_DIR}/src/game/libultra.cpp
-    ${CMAKE_SOURCE_DIR}/src/game/tlb.cpp
-    ${CMAKE_SOURCE_DIR}/src/game/hud.cpp
-    ${CMAKE_SOURCE_DIR}/src/game/cull.cpp
-    ${CMAKE_SOURCE_DIR}/src/game/backdrop.cpp
-    ${CMAKE_SOURCE_DIR}/src/game/title.cpp
-    ${CMAKE_SOURCE_DIR}/src/game/ball.cpp
-    ${CMAKE_SOURCE_DIR}/src/game/card.cpp
-    ${CMAKE_SOURCE_DIR}/src/game/iris.cpp
+    ${CMAKE_SOURCE_DIR}/src/game/boot.cpp
 )
 if (EB_PATCHES)
     target_sources(Excitebike64Recompiled PRIVATE ${CMAKE_SOURCE_DIR}/src/main/register_patches.cpp)

@@ -13,3 +13,6 @@
 [submodule "lib/excitebike64"]
 	path = lib/excitebike64
 	url = https://github.com/chasmlol/excitebike64
+[submodule "lib/ultralib"]
+	path = lib/ultralib
+	url = https://github.com/decompals/ultralib

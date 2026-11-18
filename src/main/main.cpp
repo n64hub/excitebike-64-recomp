@@ -1,4 +1,4 @@
-// Mario Golf: Recompiled on RecompFrontend: its launcher (Load ROM, Start Game), settings menus, input and RT64
+// Excitebike 64: Recompiled on RecompFrontend: its launcher (Load ROM, Start Game), settings menus, input and RT64
 // render context. The natives the patches call are recomp_api.cpp, the settings config.cpp.
 
 #include <cstdio>
@@ -62,7 +62,7 @@
 #include "window_icon_bmp.h"
 #endif
 
-const std::string version_string = "0.1.18";
+const std::string version_string = "0.1.0";
 
 template<typename... Ts>
 void exit_error(const char* str, Ts ...args) {
@@ -329,81 +329,48 @@ RspUcodeFunc* get_rsp_microcode(const OSTask* task) {
     }
 }
 
-extern "C" void recomp_entrypoint(uint8_t* rdram, recomp_context* ctx);
+// The game's entry: src/game/boot.cpp unpacks the game image as its boot loader does, then runs the game's own.
+extern "C" void eb_entrypoint(uint8_t* rdram, recomp_context* ctx);
 gpr get_entrypoint_address();
-
-static void on_init(uint8_t* rdram, recomp_context*) {
-    eb::init_tlb(rdram);
-}
 
 std::vector<recomp::GameEntry> supported_games = {
     {
-        // XXH3 of Mario Golf (USA), the 32 MB cartridge (SHA-1 e2c4e7a905b29529b49a1619a401fe699224829b): the common
-        // 24 MB dump of it, without the 0xFF it ends in, is padded back to it before the check
-        // (runtime-patches/N64ModernRuntime-1-pad-a-short-rom.patch).
-        .rom_hash = 0xc44360a904011b02ULL,
-        .internal_name = "MarioGolf64",
-        .display_name = "Mario Golf",
-        .game_id = u8"mariogolf64.n64.us.1.0",
-        .mod_game_id = "mg64",
-        // 256 Kbit of SRAM, through NuSystem's nuPiReadWriteSram.
-        .save_type = recomp::SaveType::Sram,
+        // XXH3 of Excitebike 64 (USA) (Rev 1), the 16 MB cartridge (SHA-1 c2fac422af135409c1b38569b309f9d452c81c35):
+        // the one the decomp matches byte for byte.
+        .rom_hash = 0x8ffe7d3eec5235f6ULL,
+        .internal_name = "EXCITEBIKE64",
+        .display_name = "Excitebike 64",
+        .game_id = u8"excitebike64.n64.us.1.1",
+        .mod_game_id = "eb64",
+        // The cartridge's 16 Kbit EEPROM: the records, the season, the options and the user track.
+        .save_type = recomp::SaveType::Eep16k,
         .thumbnail_bytes = std::span<const char>(icon_bytes),
         .is_enabled = true,
         .entrypoint_address = get_entrypoint_address(),
-        .entrypoint = recomp_entrypoint,
-        .on_init_callback = on_init,
+        .entrypoint = eb_entrypoint,
     },
 };
 
-// The game's threads: NuSystem's (the decomp's include/libnusys/nusys.h ids, where the controller thread shares the
-// graphics task manager's id, 5), the game's own and libultra's managers.
+// The game's threads (lib/excitebike64's docs/overview.md, Threads): its main thread, idle thread, scheduler and
+// scheduler client, and libultra's managers.
 static std::string game_thread_name(const OSThread* t) {
     std::string name = "[Game] ";
 
     switch (t->id) {
         case 0:
-            switch (t->priority) {
-                case 150:
-                    name += "PIMGR";
-                    break;
-
-                case 254:
-                    name += "VIMGR";
-                    break;
-
-                default:
-                    name += std::to_string(t->id);
-                    break;
-            }
+            name += t->priority == 150 ? "PIMGR" : t->priority == 254 ? "VIMGR" : "0";
             break;
 
         case 1:
-            name += "IDLE";
+            name += t->priority == 0 || t->priority == 8 ? "IDLE" : "SCHED";
             break;
 
         case 3:
             name += "MAIN";
             break;
 
-        case 4:
-            name += "GFX";
-            break;
-
         case 5:
-            name += t->priority == 60 ? "GFXTASKMGR" : "CONTROLLER";
-            break;
-
-        case 17:
-            name += "SC_GRAPHICS";
-            break;
-
-        case 18:
-            name += "SC_AUDIO";
-            break;
-
-        case 19:
-            name += "SC_HANDLER";
+            name += "SCHED_CLIENT";
             break;
 
         default:
