@@ -1,19 +1,20 @@
 diff --git a/src/hle/rt64_frame_dump.h b/src/hle/rt64_frame_dump.h
-index 91a5ffc..311a6b7 100644
+index 237948f..56b35da 100644
 --- a/src/hle/rt64_frame_dump.h
 +++ b/src/hle/rt64_frame_dump.h
-@@ -9,7 +9,9 @@
- //
- // - <dir>/frames.bin: every frame presented, the frames interpolated between the game's included, each as its 40-byte
- //   header (FrameHeader) and its pixels, 8-bit RGB, rows top down, the frame's color target box-filtered to at most
--//   MaxWidth wide. A frame flickering into a wrong picture for a frame between two right ones (a model paired with a
-+//   MaxWidth wide, at the shape the frame is shown: a framebuffer whose pixels aren't square (VI::pixelAspect(), a
-+//   512x240 one's 0.625) is drawn into a target of its own pixels' shape, which the VI widens or narrows as it
-+//   presents, so its columns are averaged to that shape too, and a 4:3 window's dump is 4:3 as the window is. A frame flickering into a wrong picture for a frame between two right ones (a model paired with a
+@@ -13,7 +13,10 @@
+ //   its top left corner), not the whole target, which can be larger: the targets of the frames drawn between the
+ //   game's are kept at the largest size drawn (a 1692x960 target for a 1280x720 picture), and one kept from a larger
+ //   frame before holds that frame's picture past the box. So every frame of a picture's size comes out the same size,
+-//   with nothing past it. A frame flickering into a wrong picture for a frame between two right ones (a model paired with a
++//   with nothing past it. And it is filtered to the shape the frame is shown: a framebuffer whose pixels aren't
++//   square (VI::pixelAspect(), a 512x240 one's 0.625) is drawn into a target of its own pixels' shape, which the VI
++//   widens or narrows as it presents, so its columns are averaged to that shape too, and a dump of it in a 4:3 window
++//   is 4:3 as the window is, not 2.13:1. A frame flickering into a wrong picture for a frame between two right ones (a model paired with a
  //   look-alike's place, a frame drawn in parts) is a frame the frames either side of it don't explain, which only
  //   consecutive frames tell: a window's captures come tens of milliseconds apart, at a random point between the
  //   game's frames, and a person or a model looking at one doesn't read a tree standing where another one stood.
-@@ -104,6 +106,7 @@ namespace RT64 {
+@@ -118,6 +121,7 @@ namespace RT64 {
              uint32_t height;
              uint32_t rowPitch;
              bool sixteenBits;
@@ -21,18 +22,7 @@ index 91a5ffc..311a6b7 100644
          } readbackFrame = {};
  
          static FrameDump *get() {
-@@ -187,15 +190,16 @@ namespace RT64 {
- 
-         // The frame a present shows, from its color target once the frame is drawn into it: read back by the
-         // present's commands, and handed on at the next one's, the present that read it back waited for since then.
--        // Present thread.
-+        // pixelAspect is the VI's (VI::pixelAspect()): a target pixel's width on the screen over its height. Present
-+        // thread.
-         void readback(RenderDevice *device, RenderCommandList *commandList, RenderTexture *texture, RenderFormat format, uint32_t width,
--            uint32_t height, uint64_t presentId, uint32_t index, uint32_t count)
-+            uint32_t height, float pixelAspect, uint64_t presentId, uint32_t index, uint32_t count)
-         {
-             if (readbackFrame.width > 0) {
+@@ -227,7 +231,7 @@ namespace RT64 {
                  const uint8_t *data = reinterpret_cast<const uint8_t *>(readbackBuffer->map());
                  if (data != nullptr) {
                      addFrame(readbackFrame.presentId, readbackFrame.index, readbackFrame.count, data, readbackFrame.width,
@@ -41,24 +31,24 @@ index 91a5ffc..311a6b7 100644
                      readbackBuffer->unmap();
                  }
  
-@@ -220,13 +224,13 @@ namespace RT64 {
-             commandList->copyTextureRegion(RenderTextureCopyLocation::PlacedFootprint(readbackBuffer.get(), format, width, height, 1, rowPitch / pixelSize),
-                 RenderTextureCopyLocation::Subresource(texture));
-             commandList->barriers(RenderBarrierStage::GRAPHICS, RenderTextureBarrier(texture, RenderTextureLayout::SHADER_READ));
+@@ -264,13 +268,13 @@ namespace RT64 {
+             commandList->copyTextureRegion(RenderTextureCopyLocation::PlacedFootprint(readbackBuffer.get(), p.textureFormat, width, height, 1, rowPitch / pixelSize),
+                 RenderTextureCopyLocation::Subresource(p.texture), 0, 0, 0, &box);
+             commandList->barriers(RenderBarrierStage::GRAPHICS, RenderTextureBarrier(p.texture, RenderTextureLayout::SHADER_READ));
 -            readbackFrame = { presentId, index, count, width, height, rowPitch, sixteenBits };
-+            readbackFrame = { presentId, index, count, width, height, rowPitch, sixteenBits, pixelAspect };
++            readbackFrame = { presentId, index, count, width, height, rowPitch, sixteenBits, p.vi->pixelAspect() };
          }
  
          // A presented frame's pixels, as a readback of its color target holds them: rows rowPitch bytes apart, 4
 -        // channels of 8 or of 16 bits. Present thread.
-+        // channels of 8 or of 16 bits, each pixel pixelAspect as wide as it is tall on the screen. Present thread.
++        // channels of 8 or of 16 bits, each pixel pixelAspect as wide on the screen as it is tall. Present thread.
          void addFrame(uint64_t presentId, uint32_t index, uint32_t count, const uint8_t *data, uint32_t width, uint32_t height,
 -            uint32_t rowPitch, bool sixteenBits)
 +            uint32_t rowPitch, bool sixteenBits, float pixelAspect)
          {
              if (!started.exchange(true)) {
                  start = std::chrono::steady_clock::now();
-@@ -236,9 +240,14 @@ namespace RT64 {
+@@ -280,9 +284,14 @@ namespace RT64 {
                  return;
              }
  
@@ -75,7 +65,7 @@ index 91a5ffc..311a6b7 100644
              Frame frame;
              frame.header.magic = Magic;
              frame.header.width = outWidth;
-@@ -249,14 +258,16 @@ namespace RT64 {
+@@ -293,14 +302,16 @@ namespace RT64 {
              frame.header.timeMs = nowMs();
              frame.rgb.resize(size_t(outWidth) * outHeight * 3);
              const uint32_t pixelSize = sixteenBits ? 8 : 4;
@@ -95,16 +85,3 @@ index 91a5ffc..311a6b7 100644
                              for (int c = 0; c < 3; c++) {
                                  // A 16-bit channel's high byte, little endian.
                                  sum[c] += sixteenBits ? p[c * 2 + 1] : p[c];
-diff --git a/src/hle/rt64_present_queue.cpp b/src/hle/rt64_present_queue.cpp
-index 984d537..c9fd9f2 100644
---- a/src/hle/rt64_present_queue.cpp
-+++ b/src/hle/rt64_present_queue.cpp
-@@ -418,7 +418,7 @@ namespace RT64 {
-                 // RT64_FRAME_DUMP: the frame shown, read back for a test (rt64_frame_dump.h).
-                 if (FrameDump *frameDump = FrameDump::get()) {
-                     frameDump->readback(ext.device, commandList, renderParams.texture, renderParams.textureFormat, renderParams.textureWidth,
--                        renderParams.textureHeight, present.presentId, uint32_t(i), uint32_t(framesToPresent));
-+                        renderParams.textureHeight, present.screenVI.pixelAspect(), present.presentId, uint32_t(i), uint32_t(framesToPresent));
-                 }
- 
-                 {
