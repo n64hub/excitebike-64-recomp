@@ -243,6 +243,18 @@ func = "render_draw_race"
 before_vram = 0x80005138
 text = "{ void eb_sky_end(uint8_t*, uint32_t); eb_sky_end(rdram, (uint32_t)ctx->r2); }"
 
+# The fades across the whole window (src/game/wipe.cpp): at screen_draw_wipe's entry (the list in $a0, before the
+# copy to $t7) and before its return (the list's end in $v0, set by the instruction before).
+[[patches.hook]]
+func = "screen_draw_wipe"
+before_vram = 0x800733E4
+text = "{ void eb_wipe_begin(uint8_t*, uint32_t); eb_wipe_begin(rdram, (uint32_t)ctx->r4); }"
+
+[[patches.hook]]
+func = "screen_draw_wipe"
+before_vram = 0x80073618
+text = "{ void eb_wipe_end(uint8_t*, uint32_t); eb_wipe_end(rdram, (uint32_t)ctx->r2); }"
+
 # The main menu's sponsor logo across the whole window (src/game/menu_logo.cpp): on both sides of the render_draw_image
 # call that draws it in shell_draw_screen, which the track lists' right arrow shares (a jal with a nop in its delay
 # slot), its arguments set before it and the list's end in $v0 after.

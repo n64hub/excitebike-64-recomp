@@ -20,8 +20,8 @@ This repo is the game: its recompilation, the patches over it, the desktop build
   loader (`src/game/boot.cpp`), the settings (`src/game/config.cpp`), libultra functions the runtime leaves out
   (`src/game/libultra.cpp`) and the Rumble Pak's answer to the game's probe (`src/game/rumble_pak.cpp`), the race's
   widescreen culling, HUD and sky (`src/game/widescreen.cpp`, `src/game/hud.cpp`, `src/game/sky.cpp`), the main
-  menu's sponsor logo across a wide window (`src/game/menu_logo.cpp`), and a stack trace on a crash, on Windows and
-  Linux (`src/main/crash_trace.cpp`).
+  menu's sponsor logo across a wide window (`src/game/menu_logo.cpp`), the fades across it too (`src/game/wipe.cpp`),
+  and a stack trace on a crash, on Windows and Linux (`src/main/crash_trace.cpp`).
 - `lib/`: `excitebike64` (the decomp, for `syms/` and the patches' headers), `ultralib` (the libultra the decomp builds
   against, for its headers), upstream `rt64`, `N64ModernRuntime` and `RecompFrontend` at the commits
   N64Recomp-browser's web forks are built on, and `N64Recomp-browser` at a release tag. The web support every recomp's
