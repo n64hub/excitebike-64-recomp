@@ -267,3 +267,16 @@ text = "{ void eb_logo_begin(uint8_t*, recomp_context*); eb_logo_begin(rdram, ct
 func = "shell_draw_screen"
 before_vram = 0x8007DEC4
 text = "{ void eb_logo_end(uint8_t*, uint32_t); eb_logo_end(rdram, (uint32_t)ctx->r2); }"
+
+# The boot's logos and notices kept at 4:3 (src/game/splash.cpp): on both sides of the render_draw_image call that
+# draws the screen's background in shell_draw, the list in $a3 and the screen in $s7 before it, the list's end in $v0
+# after.
+[[patches.hook]]
+func = "shell_draw"
+before_vram = 0x80088480
+text = "{ void eb_splash_begin(uint8_t*, uint32_t, uint32_t); eb_splash_begin(rdram, (uint32_t)ctx->r7, (uint32_t)ctx->r23); }"
+
+[[patches.hook]]
+func = "shell_draw"
+before_vram = 0x80088488
+text = "{ void eb_splash_end(uint8_t*, uint32_t); eb_splash_end(rdram, (uint32_t)ctx->r2); }"
