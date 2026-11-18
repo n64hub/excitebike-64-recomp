@@ -13,9 +13,10 @@
   "split screen of 4 views. The plan prints each player's controller (gGame.playerPad, 0x800F09D8) and each",
   "controller's player (gGame.padPlayer, 0x800F09DC); then each pad in turn holds A, the throttle, alone, and the plan",
   "prints the players' riders' speeds (gRiders, 0x800E4160, 0x7E0 bytes a rider, its speed at +0x420): that pad's rider",
-  "alone goes, so each controller plays its own port's rider. Then all of them ride for half a minute, and the pause menu",
-  "is opened and closed. padRumbles() says what reached each pad's rumble: the game rumbles a rider's pad as they land",
-  "hard or crash (its Rumble Pak found as src/game/rumble_pak.cpp says)."
+  "alone goes, so each controller plays its own port's rider (a rider another has knocked down reads 0.0 while it is",
+  "down, so a pad whose rider reads 0.0 is held again, first). Then all of them ride for half a minute, and the pause",
+  "menu is opened and closed. padRumbles() says what reached each pad's rumble: the game rumbles a rider's pad as they",
+  "land hard or crash (its Rumble Pak found as src/game/rumble_pak.cpp says)."
  ],
  "page": "Excitebike64Recompiled.html",
  "load": [
