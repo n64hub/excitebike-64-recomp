@@ -1,0 +1,11 @@
+# N64Recomp's configuration for Excitebike 64 (USA) (Rev 1): it reads the game's code by the symbols in syms/ out of
+# build/excitebike64.us.code.z64, the ROM with the game image the boot loader unpacks in place of the boot loader
+# (tools/unpack_code.py), and writes RecompiledFuncs/ (tools/recompile.sh).
+[input]
+# The game image's entry (the decomp's asm/game_entry.s), where the boot loader starts it.
+entrypoint = 0x80000400
+# Paths are relative to this file.
+symbols_file_path = "syms/excitebike64.us.syms.toml"
+rom_file_path = "build/excitebike64.us.code.z64"
+output_func_path = "RecompiledFuncs"
+use_absolute_symbols = true
