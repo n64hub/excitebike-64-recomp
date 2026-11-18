@@ -19,7 +19,10 @@
 //                    game sets up only through their menu's items, so a plan reaches them there (special()).
 //   special(i)       opens every item of the special tracks menu (gSpecialTracksItems, 0x800CDCB0, 0x10 bytes an
 //                    item, SCREEN_ITEM_LOCKED in its flags at +8) and puts its cursor (0x800F0718) on item i: 0
-//                    Desert, 1 Stunt Course, 2 Original Excitebike, 3 Soccer, 4 Hill Climb, 5 Excite 3D
+//                    Desert, 1 Stunt Course, 2 Original Excitebike, 3 Soccer, 4 Hill Climb, 5 Excite 3D. With two
+//                    controllers in, the game opens and locks Soccer, Hill Climb and Excite 3D each frame from the
+//                    save's highest difficulty reached (gSaveData.topDifficulty, 0x800F2560; save_update_unlocks), so
+//                    that is set past Expert too, on the plan's new profile.
 //   menu(i)          puts the main menu's cursor (0x800F0714) on item i: 0 Season, 3 Special Tracks
 //   difficulty(d)    puts the difficulty popup's cursor (gGame.difficulty, 0x800F0B20) on d: 0 the tutorial, which
 //                    Season starts in place of its rounds, 1-3 Novice to Expert
@@ -29,7 +32,7 @@
   const FRAMES = 0x800E2958, GAME_STATE = 0x800C3308, GAME_STATES = 0x800C3298, CUR_SCREEN = 0x800F5164;
   const SCREENS = 0x800CDF7C, RACE_FRAME = 0x800E8070, CUR_TRACK = 0x800F0704, TRACKS = 0x800CBB50;
   const SEASON = 0x800CB270, SPECIAL_ITEMS = 0x800CDCB0, SPECIAL_CURSOR = 0x800F0718, MAIN_CURSOR = 0x800F0714;
-  const DIFFICULTY = 0x800F0B20, CONT_COUNT = 0x800C326D;
+  const DIFFICULTY = 0x800F0B20, CONT_COUNT = 0x800C326D, TOP_DIFFICULTY = 0x800F2560;
   window.clock = () => n64r(FRAMES);
   window.state = () => (n64r(GAME_STATE) - GAME_STATES) / 0x1C;
   window.screen = () => (n64r(CUR_SCREEN) - SCREENS) / 0x2C;
@@ -46,6 +49,7 @@
     return `track ${track}`;
   };
   window.special = (i) => {
+    n64w(TOP_DIFFICULTY, (n64r(TOP_DIFFICULTY) & 0x00FFFFFF) | (4 << 24));
     for (let k = 0; k < 6; k++) w16(SPECIAL_ITEMS + k * 0x10 + 8, r16(SPECIAL_ITEMS + k * 0x10 + 8) & ~1);
     n64w(SPECIAL_CURSOR, i);
     return `special ${i}, controllers ${n64r(CONT_COUNT & ~3) >>> (8 * (3 - (CONT_COUNT & 3))) & 0xFF}`;
