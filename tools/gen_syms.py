@@ -22,6 +22,12 @@ Four of the game's functions are libultra's, compiled with the game's own compil
 runtime's in their place, as it does for libultra's own. The game's copy of osJamMesg works the thread queues itself,
 which the runtime keeps in its own way.
 
+One function starts before the decomp's table says (EARLIER_ENTRIES): Original Excitebike's update, gGameStates'
+NES entry (0x800C32F0), points at 0x800A03A0, five instructions that test the game state and run on into
+nes_update_input, which the table starts at 0x800A03B4 and calls the five padding. Without them the recomp had no
+function there, and choosing Original Excitebike stopped the game ("Failed to find function at 0x800A03A0"). Of the
+table's padding that holds code, it is the only one anything points at or calls.
+
 Usage: py -3 -I tools/gen_syms.py
 """
 import csv
@@ -42,6 +48,11 @@ LIBULTRA_COPIES = {
     "dma_pi_get_cmd_queue": "osPiGetCmdQueue",
     "dma_cart_rom_init": "osCartRomInit",
     "dma_jam_mesg": "osJamMesg",
+}
+
+# Functions that start earlier than the decomp's table has them: name, its real start (the module's docstring).
+EARLIER_ENTRIES = {
+    "nes_update_input": 0x800A03A0,
 }
 
 HEADER = "# Written by tools/gen_syms.py from lib/excitebike64/versions/us_rev1: never edit by hand.\n"
@@ -76,6 +87,9 @@ def main():
         if start <= addr < end:
             continue
         name = "recomp_entrypoint" if addr == ENTRYPOINT else LIBULTRA_COPIES.get(row["name"], row["name"])
+        if row["name"] in EARLIER_ENTRIES:
+            size += addr - EARLIER_ENTRIES[row["name"]]
+            addr = EARLIER_ENTRIES[row["name"]]
         funcs.append((addr, size, name))
     funcs.sort()
     for (a, s, n), (b, _, m) in zip(funcs, funcs[1:]):

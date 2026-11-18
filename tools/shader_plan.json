@@ -2,13 +2,14 @@
  "header": [
   "The shaders of the page's prebuilt list, recorded by N64Recomp-browser's tools/record_shaders.mjs",
   "(tools/record_shaders.sh), a page load a section. Every load: the launcher, Load ROM on a new profile, Start Game,",
-  "then Start (Enter) through the splashes and the title to the main menu, all of it section 0, built before the",
-  "game starts. Then each of Season's twenty tracks is reached by A (Space) through Season's menus to rider select,",
-  "with the race it starts put on the track (tools/shader_survey.js's setTrack(), as Season's round); each special",
-  "track through the main menu's Special Tracks, its item opened and chosen (special()); and the tutorial as the",
-  "rounds menu's last item (menu()). A section presses A into its race, past the track's intro to the countdown,",
-  "holds the throttle for 40 s of it and opens the pause menu and closes it; Original Excitebike's starts its game",
-  "and rides it for 30 s. The user track (the editor's) is left out: it is built from the outdoor tracks' pieces."
+  "then Start (Enter) through the splashes and the title to the main menu, all of it section 0, built before the game",
+  "starts. Then each of Season's twenty tracks is reached by A (Space) through Season's menus to rider select, with the",
+  "race it starts put on the track (tools/shader_survey.js's setTrack(), as Season's round); each special track through",
+  "the main menu's Special Tracks, its item opened and chosen (special()), Soccer's with two stand-in pads plugged in",
+  "(N64Recomp-browser's tools/gamepad_probe.js), since it takes two players; and the tutorial as Season's difficulty",
+  "popup's first choice (difficulty()). A section presses A into its race, past the track's intro to the countdown,",
+  "holds the throttle for 40 s of it and opens the pause menu and closes it; Original Excitebike's starts its game and",
+  "rides it for 30 s. The user track (the editor's) is left out: it is built from the outdoor tracks' pieces."
  ],
  "page": "Excitebike64Recompiled.html",
  "load": [
@@ -2056,7 +2057,7 @@
    "steps": [
     [
      "eval",
-     "menu(8, 3)"
+     "menu(3)"
     ],
     [
      "pressUntil",
@@ -2167,7 +2168,7 @@
    "steps": [
     [
      "eval",
-     "menu(8, 3)"
+     "menu(3)"
     ],
     [
      "pressUntil",
@@ -2277,8 +2278,20 @@
    "name": "soccer",
    "steps": [
     [
+     "evalFile",
+     "../lib/N64Recomp-browser/tools/gamepad_probe.js"
+    ],
+    [
      "eval",
-     "menu(8, 3)"
+     "plugPads(2)"
+    ],
+    [
+     "wait",
+     3000
+    ],
+    [
+     "eval",
+     "menu(3)"
     ],
     [
      "pressUntil",
@@ -2389,7 +2402,7 @@
    "steps": [
     [
      "eval",
-     "menu(8, 3)"
+     "menu(3)"
     ],
     [
      "pressUntil",
@@ -2500,7 +2513,7 @@
    "steps": [
     [
      "eval",
-     "menu(8, 3)"
+     "menu(3)"
     ],
     [
      "pressUntil",
@@ -2611,7 +2624,7 @@
    "steps": [
     [
      "eval",
-     "menu(8, 3)"
+     "menu(3)"
     ],
     [
      "pressUntil",
@@ -2699,22 +2712,22 @@
    "name": "tutorial",
    "steps": [
     [
-     "pressUntil",
+     "key",
      "Space",
      " ",
-     32,
-     150,
-     1500,
-     "screen() === 6",
-     30000
+     32
     ],
     [
      "wait",
-     1000
+     1500
+    ],
+    [
+     "shot",
+     "tutorial_difficulty.png"
     ],
     [
      "eval",
-     "menu(6, 6)"
+     "difficulty(0)"
     ],
     [
      "pressUntil",

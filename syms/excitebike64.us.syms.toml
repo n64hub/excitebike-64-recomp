@@ -896,7 +896,7 @@ functions = [
     { name = "edit_free_user_piece_meshes", vram = 0x8009FC50, size = 0x13C },
     { name = "shell_check_sp_dmem_magic", vram = 0x8009FD90, size = 0x14 },
     { name = "nes_init", vram = 0x8009FDB0, size = 0x5F0 },
-    { name = "nes_update_input", vram = 0x800A03B4, size = 0x3F0 },
+    { name = "nes_update_input", vram = 0x800A03A0, size = 0x404 },
     { name = "nes_draw_setup", vram = 0x800A07A4, size = 0x418 },
     { name = "nes_draw_frame", vram = 0x800A0BBC, size = 0x500 },
     { name = "nes_draw_bg_row", vram = 0x800A10BC, size = 0x654 },
