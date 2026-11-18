@@ -1,0 +1,110 @@
+diff --git a/src/hle/rt64_frame_dump.h b/src/hle/rt64_frame_dump.h
+index 91a5ffc..311a6b7 100644
+--- a/src/hle/rt64_frame_dump.h
++++ b/src/hle/rt64_frame_dump.h
+@@ -9,7 +9,9 @@
+ //
+ // - <dir>/frames.bin: every frame presented, the frames interpolated between the game's included, each as its 40-byte
+ //   header (FrameHeader) and its pixels, 8-bit RGB, rows top down, the frame's color target box-filtered to at most
+-//   MaxWidth wide. A frame flickering into a wrong picture for a frame between two right ones (a model paired with a
++//   MaxWidth wide, at the shape the frame is shown: a framebuffer whose pixels aren't square (VI::pixelAspect(), a
++//   512x240 one's 0.625) is drawn into a target of its own pixels' shape, which the VI widens or narrows as it
++//   presents, so its columns are averaged to that shape too, and a 4:3 window's dump is 4:3 as the window is. A frame flickering into a wrong picture for a frame between two right ones (a model paired with a
+ //   look-alike's place, a frame drawn in parts) is a frame the frames either side of it don't explain, which only
+ //   consecutive frames tell: a window's captures come tens of milliseconds apart, at a random point between the
+ //   game's frames, and a person or a model looking at one doesn't read a tree standing where another one stood.
+@@ -104,6 +106,7 @@ namespace RT64 {
+             uint32_t height;
+             uint32_t rowPitch;
+             bool sixteenBits;
++            float pixelAspect;
+         } readbackFrame = {};
+ 
+         static FrameDump *get() {
+@@ -187,15 +190,16 @@ namespace RT64 {
+ 
+         // The frame a present shows, from its color target once the frame is drawn into it: read back by the
+         // present's commands, and handed on at the next one's, the present that read it back waited for since then.
+-        // Present thread.
++        // pixelAspect is the VI's (VI::pixelAspect()): a target pixel's width on the screen over its height. Present
++        // thread.
+         void readback(RenderDevice *device, RenderCommandList *commandList, RenderTexture *texture, RenderFormat format, uint32_t width,
+-            uint32_t height, uint64_t presentId, uint32_t index, uint32_t count)
++            uint32_t height, float pixelAspect, uint64_t presentId, uint32_t index, uint32_t count)
+         {
+             if (readbackFrame.width > 0) {
+                 const uint8_t *data = reinterpret_cast<const uint8_t *>(readbackBuffer->map());
+                 if (data != nullptr) {
+                     addFrame(readbackFrame.presentId, readbackFrame.index, readbackFrame.count, data, readbackFrame.width,
+-                        readbackFrame.height, readbackFrame.rowPitch, readbackFrame.sixteenBits);
++                        readbackFrame.height, readbackFrame.rowPitch, readbackFrame.sixteenBits, readbackFrame.pixelAspect);
+                     readbackBuffer->unmap();
+                 }
+ 
+@@ -220,13 +224,13 @@ namespace RT64 {
+             commandList->copyTextureRegion(RenderTextureCopyLocation::PlacedFootprint(readbackBuffer.get(), format, width, height, 1, rowPitch / pixelSize),
+                 RenderTextureCopyLocation::Subresource(texture));
+             commandList->barriers(RenderBarrierStage::GRAPHICS, RenderTextureBarrier(texture, RenderTextureLayout::SHADER_READ));
+-            readbackFrame = { presentId, index, count, width, height, rowPitch, sixteenBits };
++            readbackFrame = { presentId, index, count, width, height, rowPitch, sixteenBits, pixelAspect };
+         }
+ 
+         // A presented frame's pixels, as a readback of its color target holds them: rows rowPitch bytes apart, 4
+-        // channels of 8 or of 16 bits. Present thread.
++        // channels of 8 or of 16 bits, each pixel pixelAspect as wide as it is tall on the screen. Present thread.
+         void addFrame(uint64_t presentId, uint32_t index, uint32_t count, const uint8_t *data, uint32_t width, uint32_t height,
+-            uint32_t rowPitch, bool sixteenBits)
++            uint32_t rowPitch, bool sixteenBits, float pixelAspect)
+         {
+             if (!started.exchange(true)) {
+                 start = std::chrono::steady_clock::now();
+@@ -236,9 +240,14 @@ namespace RT64 {
+                 return;
+             }
+ 
+-            const uint32_t factor = (width + MaxWidth - 1) / MaxWidth;
+-            const uint32_t outWidth = width / factor;
++            // Rows are averaged factor at a time, and columns factor / pixelAspect at a time, each output column the
++            // target's columns its share of the width covers: square pixels average factor columns, as rows do.
++            const bool square = !(pixelAspect > 0.0f) || (pixelAspect == 1.0f);
++            const float shownWidth = square ? float(width) : float(width) * pixelAspect;
++            const uint32_t factor = std::max(1U, uint32_t(std::ceil(shownWidth / float(MaxWidth))));
+             const uint32_t outHeight = height / factor;
++            const uint32_t outWidth = square ? (width / factor) : std::max(1U, uint32_t(std::lround(shownWidth / float(factor))));
++            const uint32_t spanWidth = square ? (outWidth * factor) : width;
+             Frame frame;
+             frame.header.magic = Magic;
+             frame.header.width = outWidth;
+@@ -249,14 +258,16 @@ namespace RT64 {
+             frame.header.timeMs = nowMs();
+             frame.rgb.resize(size_t(outWidth) * outHeight * 3);
+             const uint32_t pixelSize = sixteenBits ? 8 : 4;
+-            const uint32_t area = factor * factor;
+             for (uint32_t y = 0; y < outHeight; y++) {
+                 for (uint32_t x = 0; x < outWidth; x++) {
++                    const uint32_t x0 = uint32_t(uint64_t(x) * spanWidth / outWidth);
++                    const uint32_t x1 = std::max(x0 + 1, uint32_t(uint64_t(x + 1) * spanWidth / outWidth));
++                    const uint32_t area = factor * (x1 - x0);
+                     uint32_t sum[3] = {};
+                     for (uint32_t fy = 0; fy < factor; fy++) {
+                         const uint8_t *row = data + size_t(y * factor + fy) * rowPitch;
+-                        for (uint32_t fx = 0; fx < factor; fx++) {
+-                            const uint8_t *p = row + size_t(x * factor + fx) * pixelSize;
++                        for (uint32_t fx = x0; fx < x1; fx++) {
++                            const uint8_t *p = row + size_t(fx) * pixelSize;
+                             for (int c = 0; c < 3; c++) {
+                                 // A 16-bit channel's high byte, little endian.
+                                 sum[c] += sixteenBits ? p[c * 2 + 1] : p[c];
+diff --git a/src/hle/rt64_present_queue.cpp b/src/hle/rt64_present_queue.cpp
+index 984d537..c9fd9f2 100644
+--- a/src/hle/rt64_present_queue.cpp
++++ b/src/hle/rt64_present_queue.cpp
+@@ -418,7 +418,7 @@ namespace RT64 {
+                 // RT64_FRAME_DUMP: the frame shown, read back for a test (rt64_frame_dump.h).
+                 if (FrameDump *frameDump = FrameDump::get()) {
+                     frameDump->readback(ext.device, commandList, renderParams.texture, renderParams.textureFormat, renderParams.textureWidth,
+-                        renderParams.textureHeight, present.presentId, uint32_t(i), uint32_t(framesToPresent));
++                        renderParams.textureHeight, present.screenVI.pixelAspect(), present.presentId, uint32_t(i), uint32_t(framesToPresent));
+                 }
+ 
+                 {
