@@ -565,7 +565,9 @@ int main(int argc, char** argv) {
     // No Render to RAM, RT64's copy of each list's frame into RDRAM: the game's CPU never reads a frame it drew (main.c's
     // one read is a debug screenshot that writes nowhere), and it uses the framebuffer it isn't drawing as scratch
     // memory, copying a track's models into it as the race loads (tubegfx.c's tube_build_dlists), which a frame copied
-    // there afterwards would overwrite.
+    // there afterwards would overwrite. It does read the Z buffer after a race's frame (sky_scan_zbuffer), but only to
+    // draw less of the sky, down to the lowest row still clear: without the copy it finds none and draws the sky down
+    // the whole view, behind the track, as it does in a stadium.
     ultramodern::renderer::callbacks_t renderer_callbacks{
         .create_render_context = [](uint8_t* rdram, ultramodern::renderer::WindowHandle window_handle, bool developer_mode) {
             recompui::renderer::set_render_to_ram(false);

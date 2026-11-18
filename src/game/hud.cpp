@@ -13,7 +13,8 @@
 // needle (a model in an orthographic projection), so the commands are followed as the RSP would (the matrices, the
 // viewport, the vertices, the display lists they call) to know where on the screen each draws, and they are split into
 // pieces: a rectangle joins the piece before it when it lies within a few pixels of it, so a number stays with its
-// label and the minimap with its riders' dots, and each model is a piece of its own. A piece across the middle of the
+// label and the minimap with its riders' dots, and each model is a piece of its own; then pieces of rectangles that
+// lie near each other are placed as one, since a line of text is drawn out of order. A piece across the middle of the
 // screen, or near it, stays where the game draws it; one left of it is placed from the left side and one right of it
 // from the right (gEXSetRectAlign for its rectangles, gEXSetViewportAlign and the viewport again for its models). A
 // piece placed from a side draws under the game's scissor widened to the picture: the view spans the screen's width
@@ -254,6 +255,9 @@ struct Piece {
 
 Cmd g_cmds[MAX_COMMANDS];
 Piece g_pieces[MAX_COMMANDS];
+// The pieces placed as one (below): each piece's parent in its group, and a group's box at its root.
+int g_group[MAX_COMMANDS];
+Box g_group_box[MAX_COMMANDS];
 
 uint32_t g_start;
 bool g_open = false;
@@ -387,10 +391,40 @@ void anchor(uint32_t start, uint32_t end) {
     if (pieces == 0) {
         return;
     }
+    // The game draws a line of text a glyph's texture at a time, not left to right: the finish's "Press START to
+    // Continue" drew its i's and its e after the rest, and alone they were placed from the right side and "Press" from
+    // the left. So pieces of rectangles that lie near each other, whatever order they were drawn in, are placed as
+    // one, by the box of them all (a HUD makes a few dozen pieces; past a few hundred each is placed alone, as the
+    // join below is a pass over every pair).
+    for (int p = 0; p < pieces; p++) {
+        g_group[p] = p;
+        g_group_box[p] = g_pieces[p].box;
+    }
+    auto root = [](int p) {
+        while (g_group[p] != p) {
+            p = g_group[p] = g_group[g_group[p]];
+        }
+        return p;
+    };
+    for (bool joined = pieces <= 256; joined;) {
+        joined = false;
+        for (int a = 0; a < pieces; a++) {
+            for (int b = a + 1; b < pieces; b++) {
+                const int ra = root(a), rb = root(b);
+                if (ra == rb || g_pieces[a].models || g_pieces[b].models || !g_group_box[ra].near(g_group_box[rb])) {
+                    continue;
+                }
+                g_group[rb] = ra;
+                g_group_box[ra].add(g_group_box[rb]);
+                joined = true;
+            }
+        }
+    }
     for (int p = 0; p < pieces; p++) {
         Piece& piece = g_pieces[p];
-        float middle = (piece.box.x0 + piece.box.x1) * 0.5f;
-        bool across = piece.box.x0 < SCREEN_MIDDLE && piece.box.x1 > SCREEN_MIDDLE;
+        const Box& box = g_group_box[root(p)];
+        float middle = (box.x0 + box.x1) * 0.5f;
+        bool across = box.x0 < SCREEN_MIDDLE && box.x1 > SCREEN_MIDDLE;
         if (across || (middle > SCREEN_MIDDLE - MIDDLE_ZONE && middle < SCREEN_MIDDLE + MIDDLE_ZONE)) {
             piece.origin = G_EX_ORIGIN_NONE;
         }
