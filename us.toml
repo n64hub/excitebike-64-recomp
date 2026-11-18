@@ -23,3 +23,78 @@ value = 0x03E00008 # jr $ra, over j 0x800736A8
 func = "recomp_entrypoint"
 vram = 0x80000440
 value = 0x03E00008 # jr $ra, over break 1, 2
+
+# tunes_decode_adpcm_block (the decomp's asm/game_tunes.s) enters one of its four predictors' loops by a jr into a
+# table of j instructions, 8 bytes apart, at an address it computes: N64Recomp follows a jump table it reads from data,
+# not this. The 14 words from the address's computation to the table's end become a chain of branches to the same four
+# loops, with the same registers on entry.
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBF94
+value = 0x808C0000 # lb $t4, 0($a0): the first code byte, which each of the table's entries loaded
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBF98
+value = 0x01A01025 # or $v0, $t5, $zero: the predictor
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBF9C
+value = 0x1040000D # beq $v0, $zero, 0x800DBFD4: predictor 0's loop
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBFA0
+value = 0x00006820 # add $t5, $zero, $zero, as the jr's delay slot did
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBFA4
+value = 0x24010001 # addiu $at, $zero, 1
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBFA8
+value = 0x10410029 # beq $v0, $at, 0x800DC050: predictor 1's
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBFAC
+value = 0x00000000 # nop
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBFB0
+value = 0x24010002 # addiu $at, $zero, 2
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBFB4
+value = 0x10410045 # beq $v0, $at, 0x800DC0CC: predictor 2's
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBFB8
+value = 0x00000000 # nop
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBFBC
+value = 0x08037055 # j 0x800DC154: predictor 3's
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBFC0
+value = 0x00000000 # nop
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBFC4
+value = 0x00000000 # nop
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBFC8
+value = 0x00000000 # nop
