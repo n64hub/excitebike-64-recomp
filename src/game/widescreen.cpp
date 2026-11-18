@@ -64,6 +64,19 @@ void eb::widen_views(uint8_t* rdram) {
     widen(rdram, layout_2p_horizontal + 0x10);
 }
 
+// Whether the race's view `view` is one widened to the screen's width, which RT64 widens to the window: one player's,
+// the main view beside the inset one, and two players' one above the other (src/game/sky.cpp).
+bool eb::view_widened(uint8_t* rdram, int32_t view) {
+    const int32_t views = MEM_W(0, num_views);
+    if (views == 1) {
+        return true;
+    }
+    if (views != 2) {
+        return false;
+    }
+    return MEM_W(0, inset_view_active) != 0 ? view == 0 : MEM_W(0, split_vertical) == 0;
+}
+
 // How much wider than the game's own the projection of the view being drawn is (us.toml's hook in render_draw_race):
 // one player's main view and two players' one above the other, as much as their views are wider; the others, the game's.
 extern "C" float eb_view_scale(uint8_t* rdram) {

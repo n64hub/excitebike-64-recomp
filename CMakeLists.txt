@@ -232,6 +232,7 @@ target_sources(Excitebike64Recompiled PRIVATE
     ${CMAKE_SOURCE_DIR}/src/game/widescreen.cpp
     ${CMAKE_SOURCE_DIR}/src/game/hud.cpp
     ${CMAKE_SOURCE_DIR}/src/game/menu_logo.cpp
+    ${CMAKE_SOURCE_DIR}/src/game/sky.cpp
 )
 if (EB_PATCHES)
     target_sources(Excitebike64Recompiled PRIVATE ${CMAKE_SOURCE_DIR}/src/main/register_patches.cpp)

@@ -24,6 +24,9 @@ namespace eb {
     // How much wider than 4:3 the window is with the Graphics tab's Aspect Ratio Expand, where RT64 widens the picture
     // to it; 1 with Original or in a window no wider than 4:3 (widescreen.cpp).
     float window_wide();
+
+    // Whether the race's view `view` is one widened to the screen's width and by RT64 to the window (widescreen.cpp).
+    bool view_widened(uint8_t* rdram, int32_t view);
 }
 
 #endif
