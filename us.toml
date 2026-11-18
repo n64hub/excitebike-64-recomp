@@ -173,3 +173,16 @@ text = "{ void yield_self(uint8_t*); if (ctx->r2 != 0) yield_self(rdram); }"
 func = "render_draw_race"
 before_vram = 0x80004254
 text = "{ if (!(MEM_W(0, (gpr)(int32_t)0x800C2ED4) == 2 && MEM_W(0, (gpr)(int32_t)0x800C2CC4) == 0) && MEM_W(0, (gpr)(int32_t)0x800C2ED8) == 0) { union { uint32_t u; float f; } a; a.u = (uint32_t)ctx->r7; a.f *= 512.0f / 472.0f; ctx->r7 = (int32_t)a.u; } }"
+
+# The race's HUD at the wide picture's sides (src/game/hud.cpp): on both sides of render_draw_race's HUD, the minimap and
+# event_draw_hud for each view, with gdl ($fp). The first is where the HUD's branch starts (credits off, not the
+# attract mode's race), before it asks whether to draw the minimap; the second is after the loop's last command.
+[[patches.hook]]
+func = "render_draw_race"
+before_vram = 0x80006C74
+text = "{ void eb_hud_begin(uint8_t*, uint32_t); eb_hud_begin(rdram, (uint32_t)ctx->r30); }"
+
+[[patches.hook]]
+func = "render_draw_race"
+before_vram = 0x80006D58
+text = "{ void eb_hud_end(uint8_t*, uint32_t); eb_hud_end(rdram, (uint32_t)ctx->r30); }"

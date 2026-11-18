@@ -215,6 +215,7 @@ target_sources(Excitebike64Recompiled PRIVATE
     ${CMAKE_SOURCE_DIR}/src/game/boot.cpp
     ${CMAKE_SOURCE_DIR}/src/game/libultra.cpp
     ${CMAKE_SOURCE_DIR}/src/game/widescreen.cpp
+    ${CMAKE_SOURCE_DIR}/src/game/hud.cpp
 )
 if (EB_PATCHES)
     target_sources(Excitebike64Recompiled PRIVATE ${CMAKE_SOURCE_DIR}/src/main/register_patches.cpp)
