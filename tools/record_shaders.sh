@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Records src/rt64_shaders.txt, the shaders the page builds before the game and as each stage starts, by code rather
-# than by playing: N64Recomp-browser's tools/record_shaders.mjs serves the page built in <build dir> (tools/build_web.sh's
-# build/web), drives it in headless Chrome through tools/shader_plan.json, a page load a section, and writes the list.
-# Needs node 22 or later and Chrome. Then build the page again, so that it prebuilds the new list. PLAN names another
-# plan: tools/shader_plan_courses.json, the courses past Toad Highlands, goes in with --add (its header says how).
+# Records src/rt64_shaders.txt, the shaders the page builds before the game and as each track first draws, by code
+# rather than by playing: N64Recomp-browser's tools/record_shaders.mjs serves the page built in <build dir>
+# (tools/build_web.sh's build/web), drives it in headless Chrome through tools/shader_plan.json, a page load a section
+# (a track), and writes the list. Needs node 22 or later and Chrome. Then build the page again, so that it prebuilds
+# the new list. --only records the sections named, and PLAN names another plan, which goes in with --add.
 #
 #   [PLAN=<plan.json>] bash tools/record_shaders.sh <build dir> <ROM> [--profile <dir>] [--port <n>] [--only <section>,...] [--add]
 set -euo pipefail
