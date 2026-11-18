@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Builds the desktop program's release, for Windows and for Linux, and publishes both as one GitHub release. CI has no
 # ROM (none is ever uploaded), so it can't recompile the game; a release is built where the ROM is, from
-# roms/mariogolf64.us.z64, and holds nothing from it: the player picks theirs with Load ROM.
+# roms/excitebike64.us.z64, and holds nothing from it: the player picks theirs with Load ROM.
 #
 #     tools/release.sh windows   # Git Bash on Windows, with the README's toolchain: out/<name>-windows-x64.zip
 #     tools/release.sh linux     # Linux with Docker: out/<name>-linux-x64.tar.gz
@@ -70,7 +70,7 @@ unpatch() {
 }
 
 setup() {
-    [ -f roms/mariogolf64.us.z64 ] || { echo "no roms/mariogolf64.us.z64 (README, Building)" >&2; exit 1; }
+    [ -f roms/excitebike64.us.z64 ] || { echo "no roms/excitebike64.us.z64 (README, Building)" >&2; exit 1; }
     unpatch
     git submodule sync -q --recursive
     git submodule update --init --recursive
@@ -99,7 +99,7 @@ windows)
     ;;
 linux)
     setup
-    image=mg-linux:$(sha256sum tools/docker/Dockerfile.linux | cut -c1-12)
+    image=eb-linux:$(sha256sum tools/docker/Dockerfile.linux | cut -c1-12)
     mkdir -p build/home build/ccache
     docker image inspect "$image" > /dev/null 2>&1 || docker build -t "$image" -f tools/docker/Dockerfile.linux tools/docker
     docker run --rm -u "$(id -u):$(id -g)" -v "$ROOT:/src" -w /src -e CCACHE_DIR=/src/build/ccache -e HOME=/src/build/home \
@@ -133,7 +133,7 @@ boot)
     boot=${BOOT_RELEASE:-lib/N64Recomp-browser/tools/boot_release.sh}
     [ -f "$boot" ] ||
         { echo "no $boot: set BOOT_RELEASE to tools/boot_release.sh in a checkout of N64Recomp-browser's main" >&2; exit 1; }
-    bash "$boot" "$archive" roms/mariogolf64.us.z64 mariogolf64.n64.us.1.0 "out/boot-$2" "${@:3}"
+    bash "$boot" "$archive" roms/excitebike64.us.z64 excitebike64.n64.us.1.1 "out/boot-$2" "${@:3}"
     ;;
 publish)
     notes="releases/$tag.md"
@@ -150,7 +150,7 @@ publish)
         [ "$(cat "$f.booted" 2> /dev/null)" = "$(sha256sum "$f" | cut -d' ' -f1)" ] ||
             { echo "$f hasn't booted: run tools/release.sh boot windows and linux first" >&2; exit 1; }
     done
-    gh release create "$tag" "${files[@]}" --target "$commit" --title "Mario Golf: Recompiled $tag" --notes-file "$notes"
+    gh release create "$tag" "${files[@]}" --target "$commit" --title "Excitebike 64: Recompiled $tag" --notes-file "$notes"
     ;;
 *)
     echo "usage: tools/release.sh windows|linux|boot <os>|publish" >&2

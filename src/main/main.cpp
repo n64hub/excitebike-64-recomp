@@ -95,7 +95,7 @@ ultramodern::gfx_callbacks_t::gfx_data_t create_gfx() {
 
 // A port has a controller when its player is assigned, or until players are assigned when it is port 1 or a connected
 // pad's (RECOMPINPUT_PADS_IN_ORDER: the second pad connected plays port 2, and so on), as a console has a controller
-// in each port a pad is plugged into: the game offers golfers for those ports alone, up to four. Each has a Rumble Pak
+// in each port a pad is plugged into: the game offers riders for those ports alone, up to four. Each has a Rumble Pak
 // in it, which the game starts with NuSystem's nuContRmb calls (the runtime's osMotorInit, to that port's pad): with
 // no pak the runtime's osMotorInit answers PFS_ERR_NOPACK and the game never rumbles. The strength is the General tab's.
 ultramodern::input::connected_device_info_t get_connected_device_info(int controller_num) {
@@ -256,7 +256,7 @@ void queue_samples(int16_t* audio_data, size_t sample_count) {
 }
 
 // What osAiGetLength reads: the frames queued, less two retraces' worth, so that the game makes enough to cover a late
-// one. With one, Mario Golf's queue (patches/audio.c) came down to 11 ms after a 26 ms stall; with two it holds 27-60 ms.
+// one.
 size_t get_frames_remaining() {
     constexpr float buffer_offset_frames = 2.0f;
     uint64_t buffered_byte_count = get_queued_audio_bytes();
