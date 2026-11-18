@@ -7,7 +7,8 @@ built from your ROM like the desktop program, so it is never built in CI and nev
 
 What is the game's own stays here: the `EMSCRIPTEN` branches of `CMakeLists.txt` that make the game a page,
 `tools/build_web.sh`, the prebuilt shader list (`src/rt64_shaders.txt`, recorded by `tools/shader_plan.json`; the
-list's header says how to record it again), the play plans (`tools/play_plan.json`, `tools/play_plan_pads.json`) and
+list's header says how to record it again), the play plans (`tools/play_plan.json`, `tools/play_plan_pads.json`,
+`tools/play_plan_replug.json`) and
 the survey they share with the shader plan (`tools/shader_survey.js`). The rest is N64Recomp-browser's:
 `docs/porting.md` (WebGPU and the shaders, prebuilt shader lists, Emscripten), `docs/playing.md` (playing and measuring
 a page), `docs/forks.md` and `docs/findings.md`. The page is published at
@@ -48,6 +49,11 @@ N64Recomp-browser's `tools/play_page.mjs` (its `docs/playing.md`).
 and plays an Exhibition race of four players in a split screen of four views, each port's rider ridden by its own
 pad, and checks that the game counts four controllers and that the pads rumbled as their riders landed hard or
 crashed. Its header says what each step shows.
+
+`tools/play_plan_replug.json`, played with the same preload and `--fault reopen`, plugs in two stand-in pads of one
+model and plays a two-player race, each pad pulled out and plugged in again in turn while the other stays in: each
+still plays its own rider and rumbles. It then binds the keyboard's P to Start beside Enter in the controls file, and
+on the reopen (a player's next visit) P alone takes the title to the main menu.
 
 ## The shader list
 
