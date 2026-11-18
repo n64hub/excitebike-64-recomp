@@ -1,0 +1,2 @@
+# The RT64 shaders the web page builds (N64Recomp-browser's docs/porting.md, Prebuilt shader lists): none yet, to be
+# recorded with tools/record_shaders.sh.
