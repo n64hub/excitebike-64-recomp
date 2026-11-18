@@ -1,0 +1,2815 @@
+{
+ "header": [
+  "The shaders of the page's prebuilt list, recorded by N64Recomp-browser's tools/record_shaders.mjs",
+  "(tools/record_shaders.sh), a page load a section. Every load: the launcher, Load ROM on a new profile, Start Game,",
+  "then Start (Enter) through the splashes and the title to the main menu, all of it section 0, built before the game",
+  "starts. Then each of Season's twenty tracks is reached by A (Space) through Season's menus to rider select, with the",
+  "race it starts put on the track (tools/shader_survey.js's setTrack(), as Season's round); each special track through",
+  "the main menu's Special Tracks, its item opened and chosen (special()), Soccer's with two stand-in pads plugged in",
+  "(N64Recomp-browser's tools/gamepad_probe.js), since it takes two players; and the tutorial as Season's difficulty",
+  "popup's first choice (difficulty()). A section presses A into its race, past the track's intro to the countdown,",
+  "holds the throttle for 40 s of it and opens the pause menu and closes it; Original Excitebike's starts its game and",
+  "rides it for 30 s. The user track (the editor's) is left out: it is built from the outdoor tracks' pieces."
+ ],
+ "page": "Excitebike64Recompiled.html",
+ "load": [
+  [
+   "until",
+   "Device Name|once the game draws",
+   45000
+  ],
+  [
+   "wait",
+   3000
+  ]
+ ],
+ "setup": [
+  [
+   "rom",
+   627,
+   364
+  ],
+  [
+   "wait",
+   3000
+  ]
+ ],
+ "start": [
+  [
+   "click",
+   627,
+   364
+  ],
+  [
+   "wait",
+   8000
+  ],
+  [
+   "shot",
+   "boot.png"
+  ],
+  [
+   "evalFile",
+   "shader_survey.js"
+  ],
+  [
+   "pressUntil",
+   "Enter",
+   "Enter",
+   13,
+   150,
+   1500,
+   "screen() === 8",
+   120000
+  ],
+  [
+   "wait",
+   2000
+  ],
+  [
+   "shot",
+   "main_menu.png"
+  ]
+ ],
+ "sections": [
+  {
+   "name": "kyoto",
+   "steps": [
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 9",
+     60000
+    ],
+    [
+     "eval",
+     "setTrack(0)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "kyoto_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "kyoto_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "kyoto_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "mountain_quarry",
+   "steps": [
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 9",
+     60000
+    ],
+    [
+     "eval",
+     "setTrack(1)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "mountain_quarry_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "mountain_quarry_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "mountain_quarry_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "houston",
+   "steps": [
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 9",
+     60000
+    ],
+    [
+     "eval",
+     "setTrack(2)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "houston_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "houston_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "houston_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "leftys_mill",
+   "steps": [
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 9",
+     60000
+    ],
+    [
+     "eval",
+     "setTrack(3)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "leftys_mill_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "leftys_mill_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "leftys_mill_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "orlando",
+   "steps": [
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 9",
+     60000
+    ],
+    [
+     "eval",
+     "setTrack(4)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "orlando_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "orlando_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "orlando_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "nashville",
+   "steps": [
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 9",
+     60000
+    ],
+    [
+     "eval",
+     "setTrack(5)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "nashville_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "nashville_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "nashville_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "canyon_chasm",
+   "steps": [
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 9",
+     60000
+    ],
+    [
+     "eval",
+     "setTrack(6)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "canyon_chasm_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "canyon_chasm_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "canyon_chasm_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "long_island",
+   "steps": [
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 9",
+     60000
+    ],
+    [
+     "eval",
+     "setTrack(7)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "long_island_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "long_island_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "long_island_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "congo_course",
+   "steps": [
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 9",
+     60000
+    ],
+    [
+     "eval",
+     "setTrack(8)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "congo_course_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "congo_course_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "congo_course_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "las_vegas",
+   "steps": [
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 9",
+     60000
+    ],
+    [
+     "eval",
+     "setTrack(9)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "las_vegas_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "las_vegas_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "las_vegas_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "phoenix",
+   "steps": [
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 9",
+     60000
+    ],
+    [
+     "eval",
+     "setTrack(10)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "phoenix_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "phoenix_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "phoenix_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "rainforest_run",
+   "steps": [
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 9",
+     60000
+    ],
+    [
+     "eval",
+     "setTrack(11)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "rainforest_run_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "rainforest_run_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "rainforest_run_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "madrid",
+   "steps": [
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 9",
+     60000
+    ],
+    [
+     "eval",
+     "setTrack(12)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "madrid_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "madrid_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "madrid_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "gravel_pit",
+   "steps": [
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 9",
+     60000
+    ],
+    [
+     "eval",
+     "setTrack(13)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "gravel_pit_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "gravel_pit_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "gravel_pit_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "detroit",
+   "steps": [
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 9",
+     60000
+    ],
+    [
+     "eval",
+     "setTrack(14)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "detroit_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "detroit_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "detroit_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "goldmine_rush",
+   "steps": [
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 9",
+     60000
+    ],
+    [
+     "eval",
+     "setTrack(15)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "goldmine_rush_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "goldmine_rush_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "goldmine_rush_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "los_angeles",
+   "steps": [
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 9",
+     60000
+    ],
+    [
+     "eval",
+     "setTrack(16)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "los_angeles_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "los_angeles_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "los_angeles_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "construction_yard",
+   "steps": [
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 9",
+     60000
+    ],
+    [
+     "eval",
+     "setTrack(17)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "construction_yard_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "construction_yard_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "construction_yard_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "seattle",
+   "steps": [
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 9",
+     60000
+    ],
+    [
+     "eval",
+     "setTrack(18)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "seattle_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "seattle_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "seattle_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "blizzard_blitz",
+   "steps": [
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 9",
+     60000
+    ],
+    [
+     "eval",
+     "setTrack(19)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "blizzard_blitz_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "blizzard_blitz_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "blizzard_blitz_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "desert",
+   "steps": [
+    [
+     "eval",
+     "menu(3)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 7",
+     30000
+    ],
+    [
+     "wait",
+     1000
+    ],
+    [
+     "eval",
+     "special(0)"
+    ],
+    [
+     "shot",
+     "desert_menu.png"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "desert_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "desert_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "desert_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "stunt_course",
+   "steps": [
+    [
+     "eval",
+     "menu(3)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 7",
+     30000
+    ],
+    [
+     "wait",
+     1000
+    ],
+    [
+     "eval",
+     "special(1)"
+    ],
+    [
+     "shot",
+     "stunt_course_menu.png"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "stunt_course_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "stunt_course_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "stunt_course_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "soccer",
+   "steps": [
+    [
+     "evalFile",
+     "../lib/N64Recomp-browser/tools/gamepad_probe.js"
+    ],
+    [
+     "eval",
+     "plugPads(2)"
+    ],
+    [
+     "wait",
+     3000
+    ],
+    [
+     "eval",
+     "menu(3)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 7",
+     30000
+    ],
+    [
+     "wait",
+     1000
+    ],
+    [
+     "eval",
+     "special(3)"
+    ],
+    [
+     "shot",
+     "soccer_menu.png"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "soccer_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "soccer_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "soccer_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "hill_climb",
+   "steps": [
+    [
+     "eval",
+     "menu(3)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 7",
+     30000
+    ],
+    [
+     "wait",
+     1000
+    ],
+    [
+     "eval",
+     "special(4)"
+    ],
+    [
+     "shot",
+     "hill_climb_menu.png"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "hill_climb_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "hill_climb_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "hill_climb_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "excite_3d",
+   "steps": [
+    [
+     "eval",
+     "menu(3)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 7",
+     30000
+    ],
+    [
+     "wait",
+     1000
+    ],
+    [
+     "eval",
+     "special(5)"
+    ],
+    [
+     "shot",
+     "excite_3d_menu.png"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "excite_3d_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "excite_3d_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "excite_3d_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  },
+  {
+   "name": "original_excitebike",
+   "steps": [
+    [
+     "eval",
+     "menu(3)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "screen() === 7",
+     30000
+    ],
+    [
+     "wait",
+     1000
+    ],
+    [
+     "eval",
+     "special(2)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 3",
+     30000
+    ],
+    [
+     "wait",
+     5000
+    ],
+    [
+     "shot",
+     "original_excitebike_title.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     3000
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     3000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "original_excitebike_race.png"
+    ],
+    [
+     "wait",
+     10000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ]
+   ]
+  },
+  {
+   "name": "tutorial",
+   "steps": [
+    [
+     "key",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     1500
+    ],
+    [
+     "shot",
+     "tutorial_difficulty.png"
+    ],
+    [
+     "eval",
+     "difficulty(0)"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "state() === 1",
+     60000
+    ],
+    [
+     "wait",
+     4000
+    ],
+    [
+     "shot",
+     "tutorial_intro.png"
+    ],
+    [
+     "eval",
+     "`race on track ${track()} in mode ${n64r(0x800F075C)}`"
+    ],
+    [
+     "pressUntil",
+     "Space",
+     " ",
+     32,
+     150,
+     1500,
+     "racing()",
+     60000
+    ],
+    [
+     "down",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "shot",
+     "tutorial_race.png"
+    ],
+    [
+     "wait",
+     20000
+    ],
+    [
+     "up",
+     "Space",
+     " ",
+     32
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ],
+    [
+     "shot",
+     "tutorial_pause.png"
+    ],
+    [
+     "key",
+     "Enter",
+     "Enter",
+     13
+    ],
+    [
+     "wait",
+     2000
+    ]
+   ]
+  }
+ ]
+}

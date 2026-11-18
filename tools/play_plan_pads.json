@@ -1,0 +1,379 @@
+{
+ "header": [
+  "The pads' plan for N64Recomp-browser's tools/play_page.mjs, played with its tools/gamepad_probe.js as the preload",
+  "(--preload): four stand-in pads plugged in at the launcher, before Start Game, as a player's pads are there when the",
+  "game starts. Their ids are Chrome's on Windows for an Xbox pad over XInput (two), a DualSense and a Bluetooth Xbox",
+  "pad, whose ids are longer than SDL keeps and which SDL renames, so the page has to find each by its place in",
+  "navigator.getGamepads(). Each pad plays a port of its own in the order they were plugged in",
+  "(RECOMPINPUT_PADS_IN_ORDER), the keyboard port 1 beside the first, so at the main menu the game counts four",
+  "controllers (gContCount, 0x800C326D). Exhibition then, Novice, Kyoto, each screen pressed for until it has come",
+  "(tools/shader_survey.js's screenState(), screen() and playersPopup()), since the main menu drops a press while it",
+  "zooms in over the title, and at the players popup the plan makes it 4 players (gGame.numPlayers, 0x800F074C), which",
+  "the popup offers as there are controllers; at rider select each port picks with its own pad's A, and the race is a",
+  "split screen of 4 views. The plan prints each player's controller (gGame.playerPad, 0x800F09D8) and each",
+  "controller's player (gGame.padPlayer, 0x800F09DC); then each pad in turn holds A, the throttle, alone, and the plan",
+  "prints the players' riders' speeds (gRiders, 0x800E4160, 0x7E0 bytes a rider, its speed at +0x420): that pad's rider",
+  "alone goes, so each controller plays its own port's rider (a rider another has knocked down reads 0.0 while it is",
+  "down, so a pad whose rider reads 0.0 is held again, first). Then all of them ride for half a minute, and the pause",
+  "menu is opened and closed. padRumbles() says what reached each pad's rumble: the game rumbles a rider's pad as they",
+  "land hard or crash (its Rumble Pak found as src/game/rumble_pak.cpp says)."
+ ],
+ "page": "Excitebike64Recompiled.html",
+ "load": [
+  [
+   "until",
+   "RT64: all [0-9]+ prebuilt shaders built|once the game draws",
+   45000
+  ],
+  [
+   "wait",
+   5000
+  ]
+ ],
+ "setup": [
+  [
+   "rom",
+   627,
+   364
+  ],
+  [
+   "wait",
+   3000
+  ]
+ ],
+ "start": [
+  [
+   "eval",
+   "plugPads([\"Xbox 360 Controller (XInput STANDARD GAMEPAD)\", \"Xbox 360 Controller (XInput STANDARD GAMEPAD)\", \"DualSense Wireless Controller (STANDARD GAMEPAD Vendor: 054c Product: 0ce6)\", \"Xbox Wireless Controller (STANDARD GAMEPAD Vendor: 045e Product: 0b13)\"])"
+  ],
+  [
+   "click",
+   627,
+   364
+  ],
+  [
+   "wait",
+   8000
+  ],
+  [
+   "shot",
+   "boot.png"
+  ],
+  [
+   "evalFile",
+   "shader_survey.js"
+  ],
+  [
+   "eval",
+   "window.padA = (i) => { padSet(i, { buttons: { 0: 1 } }); setTimeout(() => padSet(i), 200); return `pad ${i} A`; }; window.allA = async (test, n) => { for (let k = 0; k < 12 && !test(); k++) { for (let i = 0; i < n; i++) padA(i); await new Promise((r) => setTimeout(r, 1500)); } return test(); }; window.speeds = (n) => { const v = new DataView(new ArrayBuffer(4)); const s = []; for (let i = 0; i < n; i++) { v.setUint32(0, n64r(0x800E4160 + i * 0x7E0 + 0x420)); s.push(v.getFloat32(0).toFixed(1)); } return s.join(' '); }; 'helpers'"
+  ],
+  [
+   "pressUntil",
+   "Enter",
+   "Enter",
+   13,
+   150,
+   1500,
+   "screen() === 8",
+   90000
+  ],
+  [
+   "wait",
+   3000
+  ],
+  [
+   "eval",
+   "`controllers ${(n64r(0x800C326C) >>> 16) & 0xFF}`"
+  ],
+  [
+   "shot",
+   "main_menu.png"
+  ]
+ ],
+ "play": [
+  [
+   "need",
+   "until(() => screen() === 8, 20000)"
+  ],
+  [
+   "eval",
+   "menu(1)"
+  ],
+  [
+   "pressUntil",
+   "Space",
+   " ",
+   32,
+   150,
+   1500,
+   "screenState() === 5",
+   15000
+  ],
+  [
+   "need",
+   "screenState() === 5"
+  ],
+  [
+   "wait",
+   500
+  ],
+  [
+   "shot",
+   "difficulty.png"
+  ],
+  [
+   "pressUntil",
+   "Space",
+   " ",
+   32,
+   150,
+   1500,
+   "screen() >= 10 && screen() <= 13",
+   15000
+  ],
+  [
+   "need",
+   "screen() >= 10 && screen() <= 13"
+  ],
+  [
+   "wait",
+   1000
+  ],
+  [
+   "shot",
+   "tracks.png"
+  ],
+  [
+   "pressUntil",
+   "Space",
+   " ",
+   32,
+   150,
+   1500,
+   "playersPopup()",
+   15000
+  ],
+  [
+   "need",
+   "playersPopup()"
+  ],
+  [
+   "wait",
+   500
+  ],
+  [
+   "eval",
+   "n64w(0x800F074C, 4)"
+  ],
+  [
+   "wait",
+   500
+  ],
+  [
+   "shot",
+   "players.png"
+  ],
+  [
+   "eval",
+   "`players ${n64r(0x800F074C)}`"
+  ],
+  [
+   "pressUntil",
+   "Space",
+   " ",
+   32,
+   150,
+   1500,
+   "screen() === 9",
+   30000
+  ],
+  [
+   "need",
+   "screen() === 9 && n64r(0x800F074C) === 4"
+  ],
+  [
+   "wait",
+   2000
+  ],
+  [
+   "shot",
+   "rider_select.png"
+  ],
+  [
+   "eval",
+   "allA(() => state() === 1, 4)"
+  ],
+  [
+   "eval",
+   "allA(() => state() === 1, 4)"
+  ],
+  [
+   "wait",
+   4000
+  ],
+  [
+   "shot",
+   "track_intro.png"
+  ],
+  [
+   "eval",
+   "allA(() => racing(), 4)"
+  ],
+  [
+   "clock",
+   "n64r(0x800E8070)",
+   60
+  ],
+  [
+   "wait",
+   2000
+  ],
+  [
+   "shot",
+   "race_start.png"
+  ],
+  [
+   "eval",
+   "(() => { const b = (a) => [0, 1, 2, 3].map((k) => (n64r(a) << (k * 8)) >> 24).join(' '); return `playerPad ${b(0x800F09D8)}, padPlayer ${b(0x800F09DC)}`; })()"
+  ],
+  [
+   "eval",
+   "padSet(0, { buttons: { 0: 1 } })"
+  ],
+  [
+   "wait",
+   4000
+  ],
+  [
+   "eval",
+   "`pad 0 held A: speeds ${speeds(4)}`"
+  ],
+  [
+   "eval",
+   "padSet(0)"
+  ],
+  [
+   "wait",
+   3000
+  ],
+  [
+   "eval",
+   "padSet(1, { buttons: { 0: 1 } })"
+  ],
+  [
+   "wait",
+   4000
+  ],
+  [
+   "eval",
+   "`pad 1 held A: speeds ${speeds(4)}`"
+  ],
+  [
+   "eval",
+   "padSet(1)"
+  ],
+  [
+   "wait",
+   3000
+  ],
+  [
+   "eval",
+   "padSet(2, { buttons: { 0: 1 } })"
+  ],
+  [
+   "wait",
+   4000
+  ],
+  [
+   "eval",
+   "`pad 2 held A: speeds ${speeds(4)}`"
+  ],
+  [
+   "eval",
+   "padSet(2)"
+  ],
+  [
+   "wait",
+   3000
+  ],
+  [
+   "eval",
+   "padSet(3, { buttons: { 0: 1 } })"
+  ],
+  [
+   "wait",
+   4000
+  ],
+  [
+   "eval",
+   "`pad 3 held A: speeds ${speeds(4)}`"
+  ],
+  [
+   "eval",
+   "padSet(3)"
+  ],
+  [
+   "wait",
+   3000
+  ],
+  [
+   "eval",
+   "padSet(0, { buttons: { 0: 1 } }); padSet(1, { buttons: { 0: 1 } }); padSet(2, { buttons: { 0: 1 } }); padSet(3, { buttons: { 0: 1 } }); 'all A'"
+  ],
+  [
+   "wait",
+   15000
+  ],
+  [
+   "shot",
+   "race_1.png"
+  ],
+  [
+   "wait",
+   15000
+  ],
+  [
+   "shot",
+   "race_2.png"
+  ],
+  [
+   "eval",
+   "`all held A: speeds ${speeds(4)}`"
+  ],
+  [
+   "eval",
+   "padSet(0); padSet(1); padSet(2); padSet(3); 'let go'"
+  ],
+  [
+   "clock"
+  ],
+  [
+   "key",
+   "Enter",
+   "Enter",
+   13
+  ],
+  [
+   "wait",
+   2000
+  ],
+  [
+   "shot",
+   "pause.png"
+  ],
+  [
+   "key",
+   "Enter",
+   "Enter",
+   13
+  ],
+  [
+   "wait",
+   2000
+  ],
+  [
+   "eval",
+   "padRumbles()"
+  ]
+ ]
+}

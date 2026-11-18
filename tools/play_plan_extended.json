@@ -1,0 +1,490 @@
+{
+ "header": [
+  "The extended plan for N64Recomp-browser's tools/play_page.mjs, for a long play (over 3 minutes of the game's",
+  "busiest screens): tools/play_plan_pads.json's four-player Exhibition race on Kyoto, with its preload",
+  "(tools/gamepad_probe.js), the four views of the split screen ridden for three and a half minutes, each pad holding A",
+  "and steering in turn, then the pause menu opened and closed."
+ ],
+ "page": "Excitebike64Recompiled.html",
+ "load": [
+  [
+   "until",
+   "RT64: all [0-9]+ prebuilt shaders built|once the game draws",
+   45000
+  ],
+  [
+   "wait",
+   5000
+  ]
+ ],
+ "setup": [
+  [
+   "rom",
+   627,
+   364
+  ],
+  [
+   "wait",
+   3000
+  ]
+ ],
+ "start": [
+  [
+   "eval",
+   "plugPads([\"Xbox 360 Controller (XInput STANDARD GAMEPAD)\", \"Xbox 360 Controller (XInput STANDARD GAMEPAD)\", \"DualSense Wireless Controller (STANDARD GAMEPAD Vendor: 054c Product: 0ce6)\", \"Xbox Wireless Controller (STANDARD GAMEPAD Vendor: 045e Product: 0b13)\"])"
+  ],
+  [
+   "click",
+   627,
+   364
+  ],
+  [
+   "wait",
+   8000
+  ],
+  [
+   "shot",
+   "boot.png"
+  ],
+  [
+   "evalFile",
+   "shader_survey.js"
+  ],
+  [
+   "eval",
+   "window.padA = (i) => { padSet(i, { buttons: { 0: 1 } }); setTimeout(() => padSet(i), 200); return `pad ${i} A`; }; window.allA = async (test, n) => { for (let k = 0; k < 12 && !test(); k++) { for (let i = 0; i < n; i++) padA(i); await new Promise((r) => setTimeout(r, 1500)); } return test(); }; window.speeds = (n) => { const v = new DataView(new ArrayBuffer(4)); const s = []; for (let i = 0; i < n; i++) { v.setUint32(0, n64r(0x800E4160 + i * 0x7E0 + 0x420)); s.push(v.getFloat32(0).toFixed(1)); } return s.join(' '); }; 'helpers'"
+  ],
+  [
+   "pressUntil",
+   "Enter",
+   "Enter",
+   13,
+   150,
+   1500,
+   "screen() === 8",
+   90000
+  ],
+  [
+   "wait",
+   3000
+  ],
+  [
+   "eval",
+   "`controllers ${(n64r(0x800C326C) >>> 16) & 0xFF}`"
+  ],
+  [
+   "shot",
+   "main_menu.png"
+  ]
+ ],
+ "play": [
+  [
+   "need",
+   "until(() => screen() === 8, 20000)"
+  ],
+  [
+   "eval",
+   "menu(1)"
+  ],
+  [
+   "pressUntil",
+   "Space",
+   " ",
+   32,
+   150,
+   1500,
+   "screenState() === 5",
+   15000
+  ],
+  [
+   "need",
+   "screenState() === 5"
+  ],
+  [
+   "wait",
+   500
+  ],
+  [
+   "shot",
+   "difficulty.png"
+  ],
+  [
+   "pressUntil",
+   "Space",
+   " ",
+   32,
+   150,
+   1500,
+   "screen() >= 10 && screen() <= 13",
+   15000
+  ],
+  [
+   "need",
+   "screen() >= 10 && screen() <= 13"
+  ],
+  [
+   "wait",
+   1000
+  ],
+  [
+   "shot",
+   "tracks.png"
+  ],
+  [
+   "pressUntil",
+   "Space",
+   " ",
+   32,
+   150,
+   1500,
+   "playersPopup()",
+   15000
+  ],
+  [
+   "need",
+   "playersPopup()"
+  ],
+  [
+   "wait",
+   500
+  ],
+  [
+   "eval",
+   "n64w(0x800F074C, 4)"
+  ],
+  [
+   "wait",
+   500
+  ],
+  [
+   "shot",
+   "players.png"
+  ],
+  [
+   "eval",
+   "`players ${n64r(0x800F074C)}`"
+  ],
+  [
+   "pressUntil",
+   "Space",
+   " ",
+   32,
+   150,
+   1500,
+   "screen() === 9",
+   30000
+  ],
+  [
+   "need",
+   "screen() === 9 && n64r(0x800F074C) === 4"
+  ],
+  [
+   "wait",
+   2000
+  ],
+  [
+   "shot",
+   "rider_select.png"
+  ],
+  [
+   "eval",
+   "allA(() => state() === 1, 4)"
+  ],
+  [
+   "eval",
+   "allA(() => state() === 1, 4)"
+  ],
+  [
+   "wait",
+   4000
+  ],
+  [
+   "shot",
+   "track_intro.png"
+  ],
+  [
+   "eval",
+   "allA(() => racing(), 4)"
+  ],
+  [
+   "clock",
+   "n64r(0x800E8070)",
+   60
+  ],
+  [
+   "wait",
+   2000
+  ],
+  [
+   "shot",
+   "race_start.png"
+  ],
+  [
+   "eval",
+   "(() => { const b = (a) => [0, 1, 2, 3].map((k) => (n64r(a) << (k * 8)) >> 24).join(' '); return `playerPad ${b(0x800F09D8)}, padPlayer ${b(0x800F09DC)}`; })()"
+  ],
+  [
+   "eval",
+   "padSet(0, { buttons: { 0: 1 } })"
+  ],
+  [
+   "wait",
+   4000
+  ],
+  [
+   "eval",
+   "`pad 0 held A: speeds ${speeds(4)}`"
+  ],
+  [
+   "eval",
+   "padSet(0)"
+  ],
+  [
+   "wait",
+   3000
+  ],
+  [
+   "eval",
+   "padSet(1, { buttons: { 0: 1 } })"
+  ],
+  [
+   "wait",
+   4000
+  ],
+  [
+   "eval",
+   "`pad 1 held A: speeds ${speeds(4)}`"
+  ],
+  [
+   "eval",
+   "padSet(1)"
+  ],
+  [
+   "wait",
+   3000
+  ],
+  [
+   "eval",
+   "padSet(2, { buttons: { 0: 1 } })"
+  ],
+  [
+   "wait",
+   4000
+  ],
+  [
+   "eval",
+   "`pad 2 held A: speeds ${speeds(4)}`"
+  ],
+  [
+   "eval",
+   "padSet(2)"
+  ],
+  [
+   "wait",
+   3000
+  ],
+  [
+   "eval",
+   "padSet(3, { buttons: { 0: 1 } })"
+  ],
+  [
+   "wait",
+   4000
+  ],
+  [
+   "eval",
+   "`pad 3 held A: speeds ${speeds(4)}`"
+  ],
+  [
+   "eval",
+   "padSet(3)"
+  ],
+  [
+   "wait",
+   3000
+  ],
+  [
+   "eval",
+   "padSet(0, { buttons: { 0: 1 } }); padSet(1, { buttons: { 0: 1 } }); padSet(2, { buttons: { 0: 1 } }); padSet(3, { buttons: { 0: 1 } }); 'all A'"
+  ],
+  [
+   "eval",
+   "padSet(0, { buttons: { 0: 1 }, axes: [-0.6, 0] })"
+  ],
+  [
+   "wait",
+   2000
+  ],
+  [
+   "eval",
+   "padSet(0, { buttons: { 0: 1 } })"
+  ],
+  [
+   "wait",
+   28000
+  ],
+  [
+   "shot",
+   "race_1.png"
+  ],
+  [
+   "eval",
+   "padSet(1, { buttons: { 0: 1 }, axes: [0.6, 0] })"
+  ],
+  [
+   "wait",
+   2000
+  ],
+  [
+   "eval",
+   "padSet(1, { buttons: { 0: 1 } })"
+  ],
+  [
+   "wait",
+   28000
+  ],
+  [
+   "shot",
+   "race_2.png"
+  ],
+  [
+   "eval",
+   "padSet(2, { buttons: { 0: 1 }, axes: [-0.6, 0] })"
+  ],
+  [
+   "wait",
+   2000
+  ],
+  [
+   "eval",
+   "padSet(2, { buttons: { 0: 1 } })"
+  ],
+  [
+   "wait",
+   28000
+  ],
+  [
+   "shot",
+   "race_3.png"
+  ],
+  [
+   "eval",
+   "padSet(3, { buttons: { 0: 1 }, axes: [0.6, 0] })"
+  ],
+  [
+   "wait",
+   2000
+  ],
+  [
+   "eval",
+   "padSet(3, { buttons: { 0: 1 } })"
+  ],
+  [
+   "wait",
+   28000
+  ],
+  [
+   "shot",
+   "race_4.png"
+  ],
+  [
+   "eval",
+   "padSet(0, { buttons: { 0: 1 }, axes: [-0.6, 0] })"
+  ],
+  [
+   "wait",
+   2000
+  ],
+  [
+   "eval",
+   "padSet(0, { buttons: { 0: 1 } })"
+  ],
+  [
+   "wait",
+   28000
+  ],
+  [
+   "shot",
+   "race_5.png"
+  ],
+  [
+   "eval",
+   "padSet(1, { buttons: { 0: 1 }, axes: [0.6, 0] })"
+  ],
+  [
+   "wait",
+   2000
+  ],
+  [
+   "eval",
+   "padSet(1, { buttons: { 0: 1 } })"
+  ],
+  [
+   "wait",
+   28000
+  ],
+  [
+   "shot",
+   "race_6.png"
+  ],
+  [
+   "eval",
+   "padSet(2, { buttons: { 0: 1 }, axes: [-0.6, 0] })"
+  ],
+  [
+   "wait",
+   2000
+  ],
+  [
+   "eval",
+   "padSet(2, { buttons: { 0: 1 } })"
+  ],
+  [
+   "wait",
+   28000
+  ],
+  [
+   "shot",
+   "race_7.png"
+  ],
+  [
+   "eval",
+   "`all held A: speeds ${speeds(4)}`"
+  ],
+  [
+   "eval",
+   "padSet(0); padSet(1); padSet(2); padSet(3); 'let go'"
+  ],
+  [
+   "clock"
+  ],
+  [
+   "key",
+   "Enter",
+   "Enter",
+   13
+  ],
+  [
+   "wait",
+   2000
+  ],
+  [
+   "shot",
+   "pause.png"
+  ],
+  [
+   "key",
+   "Enter",
+   "Enter",
+   13
+  ],
+  [
+   "wait",
+   2000
+  ],
+  [
+   "eval",
+   "padRumbles()"
+  ]
+ ]
+}

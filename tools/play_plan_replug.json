@@ -1,0 +1,499 @@
+{
+ "header": [
+  "4c's plan for N64Recomp-browser's tools/play_page.mjs, played with its tools/gamepad_probe.js as the preload",
+  "(--preload) and --fault reopen: two stand-in pads of one id (Chrome's for an Xbox pad over XInput), plugged in at",
+  "the launcher, play a two-player Exhibition race on Kyoto as tools/play_plan_pads.json's four do. In the race each",
+  "pad in turn is pulled out and plugged in again (unplugPad, replugPad) at its own place, the other still in, and the",
+  "plan prints each player's controller and each controller's player (gGame.playerPad, padPlayer) and the riders'",
+  "speeds as each pad alone holds A: each pad still plays its own rider, the first plugged in again below the second of",
+  "its model. Both then ride for half a minute and padRumbles() says what reached each pad. Last, it writes the",
+  "keyboard's Start bound to P beside Enter to controls.json (the format RecompFrontend saves, only the binding the",
+  "player changed). The reopen is the next visit, which runs the start steps again: they press P at the title first,",
+  "which does nothing on the first visit, and on the next, where the game has read the file as it started, has to",
+  "reach the main menu."
+ ],
+ "page": "Excitebike64Recompiled.html",
+ "load": [
+  [
+   "until",
+   "RT64: all [0-9]+ prebuilt shaders built|once the game draws",
+   45000
+  ],
+  [
+   "wait",
+   5000
+  ]
+ ],
+ "setup": [
+  [
+   "rom",
+   627,
+   364
+  ],
+  [
+   "wait",
+   3000
+  ]
+ ],
+ "start": [
+  [
+   "eval",
+   "plugPads([\"Xbox 360 Controller (XInput STANDARD GAMEPAD)\", \"Xbox 360 Controller (XInput STANDARD GAMEPAD)\"])"
+  ],
+  [
+   "click",
+   627,
+   364
+  ],
+  [
+   "wait",
+   8000
+  ],
+  [
+   "shot",
+   "boot.png"
+  ],
+  [
+   "evalFile",
+   "shader_survey.js"
+  ],
+  [
+   "eval",
+   "window.padA = (i) => { padSet(i, { buttons: { 0: 1 } }); setTimeout(() => padSet(i), 200); return `pad ${i} A`; }; window.allA = async (test, n) => { for (let k = 0; k < 12 && !test(); k++) { for (let i = 0; i < n; i++) padA(i); await new Promise((r) => setTimeout(r, 1500)); } return test(); }; window.speeds = (n) => { const v = new DataView(new ArrayBuffer(4)); const s = []; for (let i = 0; i < n; i++) { v.setUint32(0, n64r(0x800E4160 + i * 0x7E0 + 0x420)); s.push(v.getFloat32(0).toFixed(1)); } return s.join(' '); }; 'helpers'"
+  ],
+  [
+   "eval",
+   "(() => { try { return 'controls.json: ' + FS.readFile('/home/web_user/.config/Excitebike64Recompiled/controls.json', { encoding: 'utf8' }).replace(/\\s+/g, ' '); } catch { return 'no controls.json'; } })()"
+  ],
+  [
+   "pressUntil",
+   "KeyP",
+   "p",
+   80,
+   150,
+   1500,
+   "screen() === 8",
+   25000
+  ],
+  [
+   "eval",
+   "window.byP = screen() === 8; `P at the title: ${byP ? 'main menu' : 'nothing'}`"
+  ],
+  [
+   "need",
+   "(() => { try { FS.stat('/home/web_user/.config/Excitebike64Recompiled/controls.json'); return byP; } catch { return true; } })()"
+  ],
+  [
+   "pressUntil",
+   "Enter",
+   "Enter",
+   13,
+   150,
+   1500,
+   "screen() === 8",
+   90000
+  ],
+  [
+   "wait",
+   3000
+  ],
+  [
+   "eval",
+   "`controllers ${(n64r(0x800C326C) >>> 16) & 0xFF}`"
+  ],
+  [
+   "shot",
+   "main_menu.png"
+  ]
+ ],
+ "play": [
+  [
+   "need",
+   "until(() => screen() === 8, 20000)"
+  ],
+  [
+   "eval",
+   "menu(1)"
+  ],
+  [
+   "pressUntil",
+   "Space",
+   " ",
+   32,
+   150,
+   1500,
+   "screenState() === 5",
+   15000
+  ],
+  [
+   "need",
+   "screenState() === 5"
+  ],
+  [
+   "wait",
+   500
+  ],
+  [
+   "shot",
+   "difficulty.png"
+  ],
+  [
+   "pressUntil",
+   "Space",
+   " ",
+   32,
+   150,
+   1500,
+   "screen() >= 10 && screen() <= 13",
+   15000
+  ],
+  [
+   "need",
+   "screen() >= 10 && screen() <= 13"
+  ],
+  [
+   "wait",
+   1000
+  ],
+  [
+   "shot",
+   "tracks.png"
+  ],
+  [
+   "pressUntil",
+   "Space",
+   " ",
+   32,
+   150,
+   1500,
+   "playersPopup()",
+   15000
+  ],
+  [
+   "need",
+   "playersPopup()"
+  ],
+  [
+   "wait",
+   500
+  ],
+  [
+   "eval",
+   "n64w(0x800F074C, 2)"
+  ],
+  [
+   "wait",
+   500
+  ],
+  [
+   "shot",
+   "players.png"
+  ],
+  [
+   "eval",
+   "`players ${n64r(0x800F074C)}`"
+  ],
+  [
+   "pressUntil",
+   "Space",
+   " ",
+   32,
+   150,
+   1500,
+   "screen() === 9",
+   30000
+  ],
+  [
+   "need",
+   "screen() === 9 && n64r(0x800F074C) === 2"
+  ],
+  [
+   "wait",
+   2000
+  ],
+  [
+   "shot",
+   "rider_select.png"
+  ],
+  [
+   "eval",
+   "allA(() => state() === 1, 2)"
+  ],
+  [
+   "eval",
+   "allA(() => state() === 1, 2)"
+  ],
+  [
+   "wait",
+   4000
+  ],
+  [
+   "shot",
+   "track_intro.png"
+  ],
+  [
+   "eval",
+   "allA(() => racing(), 2)"
+  ],
+  [
+   "clock",
+   "n64r(0x800E8070)",
+   60
+  ],
+  [
+   "wait",
+   2000
+  ],
+  [
+   "shot",
+   "race_start.png"
+  ],
+  [
+   "eval",
+   "(() => { const b = (a) => [0, 1, 2, 3].map((k) => (n64r(a) << (k * 8)) >> 24).join(' '); return `playerPad ${b(0x800F09D8)}, padPlayer ${b(0x800F09DC)}`; })()"
+  ],
+  [
+   "eval",
+   "padSet(0, { buttons: { 0: 1 } })"
+  ],
+  [
+   "wait",
+   4000
+  ],
+  [
+   "eval",
+   "`both in: pad 0 held A: speeds ${speeds(2)}`"
+  ],
+  [
+   "eval",
+   "padSet(0)"
+  ],
+  [
+   "wait",
+   3000
+  ],
+  [
+   "eval",
+   "padSet(1, { buttons: { 0: 1 } })"
+  ],
+  [
+   "wait",
+   4000
+  ],
+  [
+   "eval",
+   "`both in: pad 1 held A: speeds ${speeds(2)}`"
+  ],
+  [
+   "eval",
+   "padSet(1)"
+  ],
+  [
+   "wait",
+   3000
+  ],
+  [
+   "need",
+   "(() => { const v = speeds(2).split(' ').map(Number); return v.every((x) => x >= 0); })()"
+  ],
+  [
+   "eval",
+   "`unplug ${unplugPad(0)}`"
+  ],
+  [
+   "wait",
+   3000
+  ],
+  [
+   "shot",
+   "out_0.png"
+  ],
+  [
+   "eval",
+   "(() => { const b = (a) => [0, 1, 2, 3].map((k) => (n64r(a) << (k * 8)) >> 24).join(' '); return `playerPad ${b(0x800F09D8)}, padPlayer ${b(0x800F09DC)}`; })()"
+  ],
+  [
+   "eval",
+   "`replug at ${replugPad(0, 0)}`"
+  ],
+  [
+   "wait",
+   3000
+  ],
+  [
+   "shot",
+   "back_0.png"
+  ],
+  [
+   "eval",
+   "(() => { const b = (a) => [0, 1, 2, 3].map((k) => (n64r(a) << (k * 8)) >> 24).join(' '); return `playerPad ${b(0x800F09D8)}, padPlayer ${b(0x800F09DC)}`; })()"
+  ],
+  [
+   "eval",
+   "padSet(0, { buttons: { 0: 1 } })"
+  ],
+  [
+   "wait",
+   4000
+  ],
+  [
+   "eval",
+   "`pad 0 plugged in again: pad 0 held A: speeds ${speeds(2)}`"
+  ],
+  [
+   "eval",
+   "padSet(0)"
+  ],
+  [
+   "wait",
+   3000
+  ],
+  [
+   "eval",
+   "padSet(1, { buttons: { 0: 1 } })"
+  ],
+  [
+   "wait",
+   4000
+  ],
+  [
+   "eval",
+   "`pad 0 plugged in again: pad 1 held A: speeds ${speeds(2)}`"
+  ],
+  [
+   "eval",
+   "padSet(1)"
+  ],
+  [
+   "wait",
+   3000
+  ],
+  [
+   "need",
+   "(() => { const v = speeds(2).split(' ').map(Number); return v.every((x) => x >= 0); })()"
+  ],
+  [
+   "eval",
+   "`unplug ${unplugPad(1)}`"
+  ],
+  [
+   "wait",
+   3000
+  ],
+  [
+   "shot",
+   "out_1.png"
+  ],
+  [
+   "eval",
+   "(() => { const b = (a) => [0, 1, 2, 3].map((k) => (n64r(a) << (k * 8)) >> 24).join(' '); return `playerPad ${b(0x800F09D8)}, padPlayer ${b(0x800F09DC)}`; })()"
+  ],
+  [
+   "eval",
+   "`replug at ${replugPad(1, 1)}`"
+  ],
+  [
+   "wait",
+   3000
+  ],
+  [
+   "shot",
+   "back_1.png"
+  ],
+  [
+   "eval",
+   "(() => { const b = (a) => [0, 1, 2, 3].map((k) => (n64r(a) << (k * 8)) >> 24).join(' '); return `playerPad ${b(0x800F09D8)}, padPlayer ${b(0x800F09DC)}`; })()"
+  ],
+  [
+   "eval",
+   "padSet(0, { buttons: { 0: 1 } })"
+  ],
+  [
+   "wait",
+   4000
+  ],
+  [
+   "eval",
+   "`pad 1 plugged in again: pad 0 held A: speeds ${speeds(2)}`"
+  ],
+  [
+   "eval",
+   "padSet(0)"
+  ],
+  [
+   "wait",
+   3000
+  ],
+  [
+   "eval",
+   "padSet(1, { buttons: { 0: 1 } })"
+  ],
+  [
+   "wait",
+   4000
+  ],
+  [
+   "eval",
+   "`pad 1 plugged in again: pad 1 held A: speeds ${speeds(2)}`"
+  ],
+  [
+   "eval",
+   "padSet(1)"
+  ],
+  [
+   "wait",
+   3000
+  ],
+  [
+   "need",
+   "(() => { const v = speeds(2).split(' ').map(Number); return v.every((x) => x >= 0); })()"
+  ],
+  [
+   "eval",
+   "padSet(0, { buttons: { 0: 1 } }); padSet(1, { buttons: { 0: 1 } }); 'both A'"
+  ],
+  [
+   "wait",
+   15000
+  ],
+  [
+   "shot",
+   "race_1.png"
+  ],
+  [
+   "wait",
+   15000
+  ],
+  [
+   "shot",
+   "race_2.png"
+  ],
+  [
+   "eval",
+   "`both held A: speeds ${speeds(2)}`"
+  ],
+  [
+   "eval",
+   "padSet(0); padSet(1); 'let go'"
+  ],
+  [
+   "clock"
+  ],
+  [
+   "eval",
+   "`${padRumbles()} calls ${padRumbleCalls()}`"
+  ],
+  [
+   "need",
+   "(() => { const p = padRumbles().split(' ').slice(1, 3).map(Number); return p[0] > 0 && p[1] > 0; })()"
+  ],
+  [
+   "eval",
+   "FS.mkdirTree('/home/web_user/.config/Excitebike64Recompiled'); FS.writeFile('/home/web_user/.config/Excitebike64Recompiled/controls.json', \"{\\n \\\"version\\\": 3,\\n \\\"profiles\\\": [\\n  {\\n   \\\"key\\\": \\\"keyboard_sp\\\",\\n   \\\"name\\\": \\\"Keyboard (SP)\\\",\\n   \\\"device\\\": \\\"Keyboard\\\",\\n   \\\"custom\\\": false,\\n   \\\"mappings\\\": {\\n    \\\"START\\\": [\\n     {\\n      \\\"input_type\\\": 1,\\n      \\\"input_id\\\": 40\\n     },\\n     {\\n      \\\"input_type\\\": 1,\\n      \\\"input_id\\\": 19\\n     }\\n    ]\\n   }\\n  }\\n ],\\n \\\"controllers\\\": []\\n}\"); 'wrote ' + FS.readFile('/home/web_user/.config/Excitebike64Recompiled/controls.json', { encoding: 'utf8' })"
+  ],
+  [
+   "wait",
+   6000
+  ]
+ ]
+}

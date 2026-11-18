@@ -1,0 +1,245 @@
+# N64Recomp's configuration for Excitebike 64 (USA) (Rev 1): it reads the game's code by the symbols in syms/ out of
+# build/excitebike64.us.code.z64, the ROM with the game image the boot loader unpacks in place of the boot loader
+# (tools/unpack_code.py), and writes RecompiledFuncs/ (tools/recompile.sh).
+[input]
+# The game image's entry (the decomp's asm/game_entry.s), where the boot loader starts it.
+entrypoint = 0x80000400
+# Paths are relative to this file.
+symbols_file_path = "syms/excitebike64.us.syms.toml"
+rom_file_path = "build/excitebike64.us.code.z64"
+output_func_path = "RecompiledFuncs"
+use_absolute_symbols = true
+
+# The game image's entry clears its bss and calls game_boot, which starts the idle thread and spins in `for (;;)`; on a
+# console the idle thread runs from there and the spin never runs again. The runtime calls the entry from a thread of
+# its own, which can't wait like a game thread, so game_boot returns once it has started the idle thread, and so does
+# the entry in place of the break after it.
+[[patches.instruction]]
+func = "game_boot"
+vram = 0x800736A8
+value = 0x03E00008 # jr $ra, over j 0x800736A8
+
+[[patches.instruction]]
+func = "recomp_entrypoint"
+vram = 0x80000440
+value = 0x03E00008 # jr $ra, over break 1, 2
+
+# tunes_decode_adpcm_block (the decomp's asm/game_tunes.s) enters one of its four predictors' loops by a jr into a
+# table of j instructions, 8 bytes apart, at an address it computes: N64Recomp follows a jump table it reads from data,
+# not this. The 14 words from the address's computation to the table's end become a chain of branches to the same four
+# loops, with the same registers on entry.
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBF94
+value = 0x808C0000 # lb $t4, 0($a0): the first code byte, which each of the table's entries loaded
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBF98
+value = 0x01A01025 # or $v0, $t5, $zero: the predictor
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBF9C
+value = 0x1040000D # beq $v0, $zero, 0x800DBFD4: predictor 0's loop
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBFA0
+value = 0x00006820 # add $t5, $zero, $zero, as the jr's delay slot did
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBFA4
+value = 0x24010001 # addiu $at, $zero, 1
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBFA8
+value = 0x10410029 # beq $v0, $at, 0x800DC050: predictor 1's
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBFAC
+value = 0x00000000 # nop
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBFB0
+value = 0x24010002 # addiu $at, $zero, 2
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBFB4
+value = 0x10410045 # beq $v0, $at, 0x800DC0CC: predictor 2's
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBFB8
+value = 0x00000000 # nop
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBFBC
+value = 0x08037055 # j 0x800DC154: predictor 3's
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBFC0
+value = 0x00000000 # nop
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBFC4
+value = 0x00000000 # nop
+
+[[patches.instruction]]
+func = "tunes_decode_adpcm_block"
+vram = 0x800DBFC8
+value = 0x00000000 # nop
+
+# Spins. The runtime runs one game thread at a time and switches only when the running one calls into it, where a
+# console's interrupts preempt any thread, so a loop that waits on another thread never ends unless each pass yields.
+# The game spins in two ways. As it changes the screen's resolution it sets gViModeRequest and waits for gViMode to
+# match, which the scheduler thread sets as it applies the mode at a retrace (sched.c): each pass that waits yields.
+[[patches.hook]]
+func = "game_main"
+before_vram = 0x8000D94C
+text = "{ void yield_self(uint8_t*); if (ctx->r3 != ctx->r2) yield_self(rdram); }"
+
+[[patches.hook]]
+func = "race_init"
+before_vram = 0x8001554C
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != ctx->r3) yield_self(rdram); }"
+
+[[patches.hook]]
+func = "race_begin"
+before_vram = 0x80015F84
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != ctx->r3) yield_self(rdram); }"
+
+[[patches.hook]]
+func = "race_update"
+before_vram = 0x800178AC
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != ctx->r3) yield_self(rdram); }"
+
+[[patches.hook]]
+func = "race_update"
+before_vram = 0x80017A98
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != ctx->r3) yield_self(rdram); }"
+
+[[patches.hook]]
+func = "race_set_video_mode"
+before_vram = 0x80019FB8
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != ctx->r3) yield_self(rdram); }"
+
+# And before it reuses memory the RSP may read (the Z buffer it unpacks fonts or a track's data into), it waits for
+# sched_get_current_task() to be 0, which the scheduler thread sets as the running task ends: each pass that waits yields.
+[[patches.hook]]
+func = "race_begin"
+before_vram = 0x80015E08
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != 0) yield_self(rdram); }"
+
+[[patches.hook]]
+func = "race_update"
+before_vram = 0x80017884
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != 0) yield_self(rdram); }"
+
+[[patches.hook]]
+func = "race_load_frontend_code"
+before_vram = 0x800198EC
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != 0) yield_self(rdram); }"
+
+[[patches.hook]]
+func = "arn_apply_noise_shading"
+before_vram = 0x800244E0
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != 0) yield_self(rdram); }"
+
+[[patches.hook]]
+func = "tube_load_pvs"
+before_vram = 0x80027B40
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != 0) yield_self(rdram); }"
+
+[[patches.hook]]
+func = "font_load_race_set"
+before_vram = 0x800481C8
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != 0) yield_self(rdram); }"
+
+# The race's projection widened with its view (src/game/widescreen.cpp, which widens one player's view from 472 of the
+# screen's 512 pixels to all of them, and two players' one above the other from 400): the aspect render_draw_race gives
+# guPerspective (320 or, in the high resolution mode, 640 over the screen's height), in $a3 here, times eb_view_scale:
+# 512/472 or 512/400 for those views, 1 for those the game keeps (side by side, three or four players, the inset view).
+[[patches.hook]]
+func = "render_draw_race"
+before_vram = 0x80004254
+text = "{ float eb_view_scale(uint8_t*); union { uint32_t u; float f; } a; a.u = (uint32_t)ctx->r7; a.f *= eb_view_scale(rdram); ctx->r7 = (int32_t)a.u; }"
+
+# The race's culling widened with its view and the picture (src/game/widescreen.cpp's eb_cull_scale, 1 where the game's
+# view is kept): in arn_cull_models the half-width a stadium model's centre may lie across, half its depth ahead (and
+# half again with two screens one above the other), in $a0 where every path compares it with the centre's side; in
+# tube_cull_sections sCullSlope (0x800C9F8C), which it has just set to 0x68, or 0x9C with two screens, and which its test
+# of each section's corners reads.
+[[patches.hook]]
+func = "arn_cull_models"
+before_vram = 0x800242C4
+text = "{ float eb_cull_scale(uint8_t*); ctx->r4 = (int32_t)((float)(int32_t)ctx->r4 * eb_cull_scale(rdram)); }"
+
+[[patches.hook]]
+func = "tube_cull_sections"
+before_vram = 0x8002692C
+text = "{ float eb_cull_scale(uint8_t*); MEM_W(0, (gpr)(int32_t)0x800C9F8C) = (int32_t)((float)MEM_W(0, (gpr)(int32_t)0x800C9F8C) * eb_cull_scale(rdram)); }"
+
+# The race's HUD at the wide picture's sides (src/game/hud.cpp): on both sides of render_draw_race's HUD, the minimap and
+# event_draw_hud for each view, with gdl ($fp). The first is where the HUD's branch starts (credits off, not the
+# attract mode's race), before it asks whether to draw the minimap; the second is after the loop's last command.
+[[patches.hook]]
+func = "render_draw_race"
+before_vram = 0x80006C74
+text = "{ void eb_hud_begin(uint8_t*, uint32_t); eb_hud_begin(rdram, (uint32_t)ctx->r30); }"
+
+[[patches.hook]]
+func = "render_draw_race"
+before_vram = 0x80006D58
+text = "{ void eb_hud_end(uint8_t*, uint32_t); eb_hud_end(rdram, (uint32_t)ctx->r30); }"
+
+# The race's sky across the whole window (src/game/sky.cpp): before render_draw_race's call to sky_draw (its list in
+# $a0; the store in its delay slot is to the command before), at sky_draw_strip's entry (the view in $a1, the list in
+# $a3), and after the call, the list's end in $v0; and the same around its call to render_clear_viewports (its list in
+# $fp, which the delay slot copies to $a0).
+[[patches.hook]]
+func = "render_draw_race"
+before_vram = 0x80005120
+text = "{ void eb_sky_begin(uint8_t*, uint32_t, int32_t); eb_sky_begin(rdram, (uint32_t)ctx->r4, 0); }"
+
+[[patches.hook]]
+func = "sky_draw_strip"
+before_vram = 0x80034090
+text = "{ void eb_sky_strip(uint8_t*, int32_t, uint32_t); eb_sky_strip(rdram, (int32_t)ctx->r5, (uint32_t)ctx->r7); }"
+
+[[patches.hook]]
+func = "render_draw_race"
+before_vram = 0x80005128
+text = "{ void eb_sky_end(uint8_t*, uint32_t); eb_sky_end(rdram, (uint32_t)ctx->r2); }"
+
+[[patches.hook]]
+func = "render_draw_race"
+before_vram = 0x80005130
+text = "{ void eb_sky_begin(uint8_t*, uint32_t, int32_t); eb_sky_begin(rdram, (uint32_t)ctx->r30, 1); }"
+
+[[patches.hook]]
+func = "render_draw_race"
+before_vram = 0x80005138
+text = "{ void eb_sky_end(uint8_t*, uint32_t); eb_sky_end(rdram, (uint32_t)ctx->r2); }"
+
+# The main menu's sponsor logo across the whole window (src/game/menu_logo.cpp): on both sides of the render_draw_image
+# call that draws it in shell_draw_screen, which the track lists' right arrow shares (a jal with a nop in its delay
+# slot), its arguments set before it and the list's end in $v0 after.
+[[patches.hook]]
+func = "shell_draw_screen"
+before_vram = 0x8007DEBC
+text = "{ void eb_logo_begin(uint8_t*, recomp_context*); eb_logo_begin(rdram, ctx); }"
+
+[[patches.hook]]
+func = "shell_draw_screen"
+before_vram = 0x8007DEC4
+text = "{ void eb_logo_end(uint8_t*, uint32_t); eb_logo_end(rdram, (uint32_t)ctx->r2); }"
