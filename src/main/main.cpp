@@ -316,17 +316,10 @@ void reset_audio(uint32_t output_freq) {
     update_audio_converter();
 }
 
-// The audio microcode, recompiled by RSPRecomp from n_aspMain.us.toml (tools/recompile.sh). Graphics tasks go to RT64.
-extern RspUcodeFunc n_aspMain_run;
-
+// The RSP tasks the runtime runs itself: none, since the game mixes its sound on the CPU. Graphics tasks go to RT64.
 RspUcodeFunc* get_rsp_microcode(const OSTask* task) {
-    switch (task->t.type) {
-    case M_AUDTASK:
-        return n_aspMain_run;
-    default:
-        fprintf(stderr, "Unknown task: %" PRIu32 "\n", task->t.type);
-        return nullptr;
-    }
+    fprintf(stderr, "Unknown task: %" PRIu32 "\n", task->t.type);
+    return nullptr;
 }
 
 // The game's entry: src/game/boot.cpp unpacks the game image as its boot loader does, then runs the game's own.

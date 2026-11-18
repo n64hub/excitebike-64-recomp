@@ -123,10 +123,6 @@ target_compile_options(RecompiledFuncs PRIVATE
     -Wno-unused-variable
     -Wno-implicit-function-declaration
 )
-# The microcode's vector unit (librecomp's rsp_vu_impl.hpp) uses SSE4.1 on x86-64, as the program does.
-if (CMAKE_SIZEOF_VOID_P EQUAL 8 AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64|AMD64")
-    target_compile_options(RecompiledFuncs PRIVATE -march=nehalem)
-endif()
 # A call to an undeclared function links to a trap in WebAssembly, so it is an error there (N64Recomp-web's funcs.h
 # declares every function the recompiled code calls).
 if (EMSCRIPTEN)
@@ -217,6 +213,7 @@ target_sources(Excitebike64Recompiled PRIVATE
     ${CMAKE_SOURCE_DIR}/src/main/register_overlays.cpp
     ${CMAKE_SOURCE_DIR}/src/game/config.cpp
     ${CMAKE_SOURCE_DIR}/src/game/boot.cpp
+    ${CMAKE_SOURCE_DIR}/src/game/libultra.cpp
 )
 if (EB_PATCHES)
     target_sources(Excitebike64Recompiled PRIVATE ${CMAKE_SOURCE_DIR}/src/main/register_patches.cpp)

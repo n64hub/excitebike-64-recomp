@@ -9,3 +9,17 @@ symbols_file_path = "syms/excitebike64.us.syms.toml"
 rom_file_path = "build/excitebike64.us.code.z64"
 output_func_path = "RecompiledFuncs"
 use_absolute_symbols = true
+
+# The game image's entry clears its bss and calls game_boot, which starts the idle thread and spins in `for (;;)`; on a
+# console the idle thread runs from there and the spin never runs again. The runtime calls the entry from a thread of
+# its own, which can't wait like a game thread, so game_boot returns once it has started the idle thread, and so does
+# the entry in place of the break after it.
+[[patches.instruction]]
+func = "game_boot"
+vram = 0x800736A8
+value = 0x03E00008 # jr $ra, over j 0x800736A8
+
+[[patches.instruction]]
+func = "recomp_entrypoint"
+vram = 0x80000440
+value = 0x03E00008 # jr $ra, over break 1, 2

@@ -6,7 +6,7 @@ tables are what its own build links by, checked byte for byte against the ROM th
 The game image is one section, .game: VRAM 0x80000400-0x800DC9B8, its code and initialized data, which the boot loader
 unpacks from the ROM's container (tools/unpack_code.py). Its ROM offset is 0x1000, where build/excitebike64.us.code.z64
 holds it for N64Recomp and where the runtime maps the section at boot (it maps what lies in the 1 MB after ROM 0x1000
-at the entrypoint, and src/main/main.cpp's entry puts the unpacked image there). The boot loader, which the recomp
+at the entrypoint, and src/game/boot.cpp's entry puts the unpacked image there). The boot loader, which the recomp
 never runs, is left out. The front-end code and the UsrTrk.c overlay in it are given back to the heap during a race
 and unpacked again at the same address after it, so they are plain code here too.
 
@@ -14,8 +14,13 @@ Every function of the game image is listed but the linker's padding between obje
 libultra's and the hand-written asm, the sound code among the data included. libultra's exception handler
 (exceptasm.o), which the decomp's table splits at other places and partly calls padding, is listed by the names in its
 libultra_map.json, each running to the next: N64Recomp knows every one of them and leaves them out, since the runtime
-does what they do. func_80000400 (asm/game_entry.s) is the
-ROM header's entrypoint, which N64Recomp names recomp_entrypoint.
+does what they do. func_80000400 (asm/game_entry.s) is the game image's entry, which N64Recomp names
+recomp_entrypoint.
+
+Four of the game's functions are libultra's, compiled with the game's own compiler under names of the game's
+(LIBULTRA_COPIES, from their comments in the decomp): they take libultra's names here, so that N64Recomp calls the
+runtime's in their place, as it does for libultra's own. The game's copy of osJamMesg works the thread queues itself,
+which the runtime keeps in its own way.
 
 Usage: py -3 -I tools/gen_syms.py
 """
@@ -31,6 +36,13 @@ ROM = 0x1000
 VRAM = 0x80000400
 END = 0x800DC9B8
 ENTRYPOINT = 0x80000400
+
+LIBULTRA_COPIES = {
+    "dma_epi_start": "osEPiStartDma",
+    "dma_pi_get_cmd_queue": "osPiGetCmdQueue",
+    "dma_cart_rom_init": "osCartRomInit",
+    "dma_jam_mesg": "osJamMesg",
+}
 
 HEADER = "# Written by tools/gen_syms.py from lib/excitebike64/versions/us_rev1: never edit by hand.\n"
 
@@ -63,7 +75,7 @@ def main():
             raise SystemExit(f"{row['name']} at {addr:#x} is outside the game image")
         if start <= addr < end:
             continue
-        name = "recomp_entrypoint" if addr == ENTRYPOINT else row["name"]
+        name = "recomp_entrypoint" if addr == ENTRYPOINT else LIBULTRA_COPIES.get(row["name"], row["name"])
         funcs.append((addr, size, name))
     funcs.sort()
     for (a, s, n), (b, _, m) in zip(funcs, funcs[1:]):
