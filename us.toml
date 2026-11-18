@@ -98,3 +98,69 @@ value = 0x00000000 # nop
 func = "tunes_decode_adpcm_block"
 vram = 0x800DBFC8
 value = 0x00000000 # nop
+
+# Spins. The runtime runs one game thread at a time and switches only when the running one calls into it, where a
+# console's interrupts preempt any thread, so a loop that waits on another thread never ends unless each pass yields.
+# The game spins in two ways. As it changes the screen's resolution it sets gViModeRequest and waits for gViMode to
+# match, which the scheduler thread sets as it applies the mode at a retrace (sched.c): each pass that waits yields.
+[[patches.hook]]
+func = "game_main"
+before_vram = 0x8000D94C
+text = "{ void yield_self(uint8_t*); if (ctx->r3 != ctx->r2) yield_self(rdram); }"
+
+[[patches.hook]]
+func = "race_init"
+before_vram = 0x8001554C
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != ctx->r3) yield_self(rdram); }"
+
+[[patches.hook]]
+func = "race_begin"
+before_vram = 0x80015F84
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != ctx->r3) yield_self(rdram); }"
+
+[[patches.hook]]
+func = "race_update"
+before_vram = 0x800178AC
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != ctx->r3) yield_self(rdram); }"
+
+[[patches.hook]]
+func = "race_update"
+before_vram = 0x80017A98
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != ctx->r3) yield_self(rdram); }"
+
+[[patches.hook]]
+func = "race_set_video_mode"
+before_vram = 0x80019FB8
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != ctx->r3) yield_self(rdram); }"
+
+# And before it reuses memory the RSP may read (the Z buffer it unpacks fonts or a track's data into), it waits for
+# sched_get_current_task() to be 0, which the scheduler thread sets as the running task ends: each pass that waits yields.
+[[patches.hook]]
+func = "race_begin"
+before_vram = 0x80015E08
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != 0) yield_self(rdram); }"
+
+[[patches.hook]]
+func = "race_update"
+before_vram = 0x80017884
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != 0) yield_self(rdram); }"
+
+[[patches.hook]]
+func = "race_load_frontend_code"
+before_vram = 0x800198EC
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != 0) yield_self(rdram); }"
+
+[[patches.hook]]
+func = "arn_apply_noise_shading"
+before_vram = 0x800244E0
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != 0) yield_self(rdram); }"
+
+[[patches.hook]]
+func = "tube_load_pvs"
+before_vram = 0x80027B40
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != 0) yield_self(rdram); }"
+
+[[patches.hook]]
+func = "font_load_race_set"
+before_vram = 0x800481C8
+text = "{ void yield_self(uint8_t*); if (ctx->r2 != 0) yield_self(rdram); }"
