@@ -8,10 +8,9 @@ built from your ROM like the desktop program, so it is never built in CI and nev
 What is the game's own stays here: the `EMSCRIPTEN` branches of `CMakeLists.txt` that make the game a page,
 `tools/build_web.sh`, the prebuilt shader list (`src/rt64_shaders.txt`, recorded by `tools/shader_plan.json`; the
 list's header says how to record it again), the play plans (`tools/play_plan.json`, `tools/play_plan_pads.json`,
-`tools/play_plan_replug.json`) and
-the survey they share with the shader plan (`tools/shader_survey.js`). The rest is N64Recomp-browser's:
-`docs/porting.md` (WebGPU and the shaders, prebuilt shader lists, Emscripten), `docs/playing.md` (playing and measuring
-a page), `docs/forks.md` and `docs/findings.md`. The page is published at
+`tools/play_plan_replug.json`, `tools/play_plan_extended.json`) and the survey they share with the shader plan
+(`tools/shader_survey.js`). The rest is N64Recomp-browser's: `docs/porting.md` (WebGPU and the shaders, prebuilt shader
+lists, Emscripten), `docs/playing.md` (playing and measuring a page), `docs/forks.md` and `docs/findings.md`. The page is published at
 [n64hub.com/excitebike-64](https://n64hub.com/excitebike-64/).
 
 ## Build it
@@ -55,6 +54,9 @@ model and plays a two-player race, each pad pulled out and plugged in again in t
 still plays its own rider and rumbles. It then binds the keyboard's P to Start beside Enter in the controls file, and
 on the reopen (a player's next visit) P alone takes the title to the main menu.
 
+`tools/play_plan_extended.json` is the long play: the pads plan's four-player race ridden for three and a half minutes,
+each pad steering in turn.
+
 ## The shader list
 
 `src/rt64_shaders.txt` holds the boot's section (the splashes, the title and the menus) and one for each track: Season's
@@ -71,3 +73,9 @@ The game draws its races into a 512x240 framebuffer and its menus into a 320x240
 framebuffer's pixel is as wide as the TV shows it (N64Recomp-browser's `docs/forks.md`). Render to RAM is off: the
 game's CPU reads no frame it drew, and copies a track's models into the framebuffer it isn't drawing as the race loads
 (`src/main/main.cpp` says why), so a frame copied back would overwrite them.
+
+It draws at the display's rate, RT64's frames between the game's, and at the canvas's size: on an idle host with a
+desktop GPU (an RTX 2070), uncapped in Chrome, the regular plan presented 350 frames a second (300-360, held by the
+uncapped rate of 360), with no shader the list lacked, no wait for one and no sound short. Each pad plays a port of its
+own, its Rumble Pak with it, through a pad pulled out and plugged in again (`tools/play_plan_pads.json`,
+`tools/play_plan_replug.json`).
