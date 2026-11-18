@@ -165,6 +165,18 @@ func = "font_load_race_set"
 before_vram = 0x800481C8
 text = "{ void yield_self(uint8_t*); if (ctx->r2 != 0) yield_self(rdram); }"
 
+# The audio interface's FIFO full, as the game's sound loops read it after osAiGetStatus ($v0): n64snd_update's and
+# nes_audio_update's (src/main/main.cpp's eb_ai_status says why).
+[[patches.hook]]
+func = "n64snd_update"
+before_vram = 0x800BC744
+text = "{ void eb_ai_status(uint8_t*, recomp_context*); eb_ai_status(rdram, ctx); }"
+
+[[patches.hook]]
+func = "nes_audio_update"
+before_vram = 0x800A2274
+text = "{ void eb_ai_status(uint8_t*, recomp_context*); eb_ai_status(rdram, ctx); }"
+
 # The race's projection widened with its view (src/game/widescreen.cpp, which widens one player's view from 472 of the
 # screen's 512 pixels to all of them, and two players' one above the other from 400): the aspect render_draw_race gives
 # guPerspective (320 or, in the high resolution mode, 640 over the screen's height), in $a3 here, times eb_view_scale:
