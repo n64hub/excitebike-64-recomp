@@ -8,8 +8,8 @@
 # popup's first choice (difficulty()). A section presses A into its race, past the track's intro to the countdown,
 # holds the throttle for 40 s of it and opens the pause menu and closes it; Original Excitebike's starts its game and
 # rides it for 30 s. The user track (the editor's) is left out: it is built from the outdoor tracks' pieces.
-# Section 0 also holds the five shaders the pads plan (tools/play_plan_pads.json) missed in its four players' split
-# screen, as Kyoto's intro started, before the track's section had come.
+# Section 0 also holds six shaders split screens missed as Kyoto's intro started, before the track's section had come:
+# five in the pads plan's (tools/play_plan_pads.json) four players' and one in two players'.
 0c084000 0000ac3f fcffffff fffcf87c 04cb540b
 00404240 0000ac3f fcffffff fffdf6fb 0800000b
 00404240 0000ac3f fcffffff fffcf279 04cb540b
@@ -38,6 +38,7 @@ c8004030 0008ac3f fc127e24 fffff3f9 088a000c
 0c084000 00002c3f fcffffff fffdf6fb 0800000b
 004041c8 00002c3f fc119623 ff2fffff 0803540b
 004041c8 00000c3f fc119623 ff2fffff 0803540b
+00504240 00008c3f fcffffff fffcf279 04cb540b
 section kyoto
 00404240 00008c3f fcffffff fffcf279 04cb540b
 00404240 00000c3f fc119623 ff2fffff 04cb540b

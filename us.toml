@@ -165,28 +165,29 @@ func = "font_load_race_set"
 before_vram = 0x800481C8
 text = "{ void yield_self(uint8_t*); if (ctx->r2 != 0) yield_self(rdram); }"
 
-# The race's one-player projection widened with its view (src/game/widescreen.cpp, which widens the view from 472 of
-# the screen's 512 pixels to all of them): the aspect render_draw_race gives guPerspective (320 or, in the high
-# resolution mode, 640 over the screen's height), in $a3 here, times 512/472, for the main view alone. Split screen's
-# two views (gNumViews 2 with gInsetViewActive 0) and the inset view (gCurView 1) keep the game's.
+# The race's projection widened with its view (src/game/widescreen.cpp, which widens one player's view from 472 of the
+# screen's 512 pixels to all of them, and two players' one above the other from 400): the aspect render_draw_race gives
+# guPerspective (320 or, in the high resolution mode, 640 over the screen's height), in $a3 here, times eb_view_scale:
+# 512/472 or 512/400 for those views, 1 for those the game keeps (side by side, three or four players, the inset view).
 [[patches.hook]]
 func = "render_draw_race"
 before_vram = 0x80004254
-text = "{ if (!(MEM_W(0, (gpr)(int32_t)0x800C2ED4) == 2 && MEM_W(0, (gpr)(int32_t)0x800C2CC4) == 0) && MEM_W(0, (gpr)(int32_t)0x800C2ED8) == 0) { union { uint32_t u; float f; } a; a.u = (uint32_t)ctx->r7; a.f *= 512.0f / 472.0f; ctx->r7 = (int32_t)a.u; } }"
+text = "{ float eb_view_scale(uint8_t*); union { uint32_t u; float f; } a; a.u = (uint32_t)ctx->r7; a.f *= eb_view_scale(rdram); ctx->r7 = (int32_t)a.u; }"
 
-# The race's culling widened with its view and the picture (src/game/widescreen.cpp's eb_cull_scale), with one screen
-# (gNumScreens, 0x800E21B8): in arn_cull_models the half-width a stadium model's centre may lie across, half its depth
-# ahead, in $a0 where every one-screen path compares it with the centre's side; in tube_cull_sections sCullSlope
-# (0x800C9F8C), which it has just set to 0x68 and which its test of each section's corners reads.
+# The race's culling widened with its view and the picture (src/game/widescreen.cpp's eb_cull_scale, 1 where the game's
+# view is kept): in arn_cull_models the half-width a stadium model's centre may lie across, half its depth ahead (and
+# half again with two screens one above the other), in $a0 where every path compares it with the centre's side; in
+# tube_cull_sections sCullSlope (0x800C9F8C), which it has just set to 0x68, or 0x9C with two screens, and which its test
+# of each section's corners reads.
 [[patches.hook]]
 func = "arn_cull_models"
 before_vram = 0x800242C4
-text = "{ float eb_cull_scale(uint8_t*); if (MEM_W(0, (gpr)(int32_t)0x800E21B8) == 1) ctx->r4 = (int32_t)((float)(int32_t)ctx->r4 * eb_cull_scale(rdram)); }"
+text = "{ float eb_cull_scale(uint8_t*); ctx->r4 = (int32_t)((float)(int32_t)ctx->r4 * eb_cull_scale(rdram)); }"
 
 [[patches.hook]]
 func = "tube_cull_sections"
 before_vram = 0x8002692C
-text = "{ float eb_cull_scale(uint8_t*); if (MEM_W(0, (gpr)(int32_t)0x800E21B8) == 1) MEM_W(0, (gpr)(int32_t)0x800C9F8C) = (int32_t)(0x68 * eb_cull_scale(rdram)); }"
+text = "{ float eb_cull_scale(uint8_t*); MEM_W(0, (gpr)(int32_t)0x800C9F8C) = (int32_t)((float)MEM_W(0, (gpr)(int32_t)0x800C9F8C) * eb_cull_scale(rdram)); }"
 
 # The race's HUD at the wide picture's sides (src/game/hud.cpp): on both sides of render_draw_race's HUD, the minimap and
 # event_draw_hud for each view, with gdl ($fp). The first is where the HUD's branch starts (credits off, not the

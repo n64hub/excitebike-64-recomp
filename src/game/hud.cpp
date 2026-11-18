@@ -1,8 +1,10 @@
 // The race's HUD at the wide picture's sides (RT64's Aspect Ratio Expand): what the game draws at the left of its 4:3
 // frame is placed from the window's left, what it draws at the right from its right, and what it draws in the middle
 // (the countdown, the finish) stays there. The sides are those of the picture RecompFrontend's HUD Placement gives the
-// HUD (16:9 by default); at 4:3, or with Aspect Ratio Original, RT64 places everything as the game does. Only one
-// player's race is placed so: split screen's HUDs belong to their views, which stay as the game has them.
+// HUD (16:9 by default); at 4:3, or with Aspect Ratio Original, RT64 places everything as the game does. One player's
+// race is placed so, and two players' one above the other, whose views span the window as one player's does
+// (src/game/widescreen.cpp): each view's pieces at the left go to the left side and those at the right to the right.
+// The other split screens' HUDs belong to their views, which stay as the game has them.
 //
 // As Mario Golf: Recompiled does for its course, the commands the game adds to the frame's display list for the HUD
 // are put back with RT64's alignments between them. us.toml hooks render_draw_race on both sides of its HUD (the
@@ -46,6 +48,8 @@ constexpr uint32_t EB_SCREEN_WIDTH = 0x800F1D8C;    // gScreenWidth: 512, or 640
 constexpr uint32_t EB_SCREEN_HEIGHT = 0x800F1D90;   // gScreenHeight: 240 or 480
 constexpr uint32_t EB_SCREEN_VIEWPORT = 0x800C2F28; // gScreenViewport, the whole screen's
 constexpr uint32_t EB_NUM_VIEWS = 0x800C2ED4;       // gNumViews
+constexpr uint32_t EB_INSET_VIEW = 0x800C2CC4;      // gInsetViewActive
+constexpr uint32_t EB_SPLIT_VERTICAL = 0x800C2CC8;  // gSplitVertical
 
 // The screen's width and middle, set each frame, and the zones below in its pixels: Mario Golf's at 320 wide, scaled.
 int SCREEN_WIDTH = 512;
@@ -487,7 +491,9 @@ extern "C" void eb_hud_begin(uint8_t* rdram, uint32_t gdl) {
     g_rdram = rdram;
     g_open = false;
     int width = int(rd_w(EB_SCREEN_WIDTH));
-    if (rd_w(EB_NUM_VIEWS) != 1 || (width != 512 && width != 640)) {
+    const uint32_t views = rd_w(EB_NUM_VIEWS);
+    const bool split_horizontal = views == 2 && rd_w(EB_INSET_VIEW) == 0 && rd_w(EB_SPLIT_VERTICAL) == 0;
+    if ((views != 1 && !split_horizontal) || (width != 512 && width != 640)) {
         return;
     }
     SCREEN_WIDTH = width;

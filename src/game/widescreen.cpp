@@ -8,15 +8,21 @@
 // is unpacked, before the game reads them (render_update_screen_layout copies the mode's layout into gViewLayouts as
 // a race starts). Its projection is widened by as much (us.toml's hook in render_draw_race, before guPerspective), so
 // the picture keeps its proportions and shows the track where the border was. At 4:3 that is the only change: the
-// sides' 20 pixels show the track, the top and bottom borders stay. Split screen's layouts and the inset view are left
-// as the game has them.
+// sides' 20 pixels show the track, the top and bottom borders stay.
+//
+// Two players' split one above the other (sLayout2PHorizontal, gSplitVertical 0) is two views of 400x104 at x 56 in the
+// game's layout, so they span the screen's width too, their projections widened by 512/400, and RT64 widens them to the
+// window as it does one player's. Split side by side (sLayout2PVertical, 228 wide each), with three or four players
+// (quarters) and the inset view of one player's race, the views are narrower than the frame and stay as the game has
+// them, 4:3 in the middle of the window.
 //
 // And the race culls its world to that view: the stadium's sections and objects to within half as far across as ahead
-// of the camera (arn_cull_models), an outdoor track's sections to those with a corner within sCullSlope (0x68/256)
-// across of its depth (tube_cull_sections). Both are widened by eb_cull_scale (us.toml's hooks): 512/472 for the view
-// across the screen's whole width, times the window's aspect ratio over 4:3 with the Graphics tab's Aspect Ratio Expand,
-// where RT64 widens the picture to the window. At 32:9 the stands, barriers and track past the 4:3 frame's sides came
-// and went with the camera.
+// of the camera (arn_cull_models; half again as far with two screens one above the other), an outdoor track's sections
+// to those with a corner within sCullSlope (0x68/256, 0x9C/256 with two screens) across of its depth
+// (tube_cull_sections). Both are widened by eb_cull_scale (us.toml's hooks): 512/472 for one player's view across the
+// screen's whole width, 512/400 for two players' one above the other, times the window's aspect ratio over 4:3 with the
+// Graphics tab's Aspect Ratio Expand, where RT64 widens the picture to the window. At 32:9 the stands, barriers and
+// track past the 4:3 frame's sides came and went with the camera.
 
 #include <cstdint>
 
@@ -30,6 +36,19 @@ namespace {
     constexpr gpr layout_1p_hi_res = (gpr)(int32_t)0x800C2DB4;  // sLayout1PHiRes: x, y, width, height
     constexpr gpr layout_1p = (gpr)(int32_t)0x800C2DC4;         // sLayout1P
     constexpr gpr view_layouts = (gpr)(int32_t)0x800C2DD4;      // gViewLayouts[0], the layout in use, as unpacked
+    constexpr gpr layout_2p_horizontal = (gpr)(int32_t)0x800C2D74; // sLayout2PHorizontal: its two views, 0x10 each
+    constexpr gpr num_views = (gpr)(int32_t)0x800C2ED4;         // gNumViews
+    constexpr gpr cur_view = (gpr)(int32_t)0x800C2ED8;          // gCurView
+    constexpr gpr inset_view_active = (gpr)(int32_t)0x800C2CC4; // gInsetViewActive
+    constexpr gpr split_vertical = (gpr)(int32_t)0x800C2CC8;    // gSplitVertical
+    constexpr gpr num_screens = (gpr)(int32_t)0x800E21B8;       // gNumScreens
+    constexpr float one_player = 512.0f / 472.0f;
+    constexpr float two_players = 512.0f / 400.0f;
+
+    // Two players' views, one above the other.
+    bool split_horizontal(uint8_t* rdram) {
+        return MEM_W(0, inset_view_active) == 0 && MEM_W(0, split_vertical) == 0;
+    }
 
     void widen(uint8_t* rdram, gpr layout) {
         MEM_W(0, layout) = 0;           // x
@@ -41,12 +60,39 @@ void eb::widen_views(uint8_t* rdram) {
     widen(rdram, layout_1p_hi_res);
     widen(rdram, layout_1p);
     widen(rdram, view_layouts);
+    widen(rdram, layout_2p_horizontal);
+    widen(rdram, layout_2p_horizontal + 0x10);
 }
 
-// How much wider than the game's own the race's culling is (above): 512/472 with Original or in a window no wider than
-// 4:3, the view spanning the border's 40 pixels too, and with Expand that times how much wider than 4:3 the window is.
+// How much wider than the game's own the projection of the view being drawn is (us.toml's hook in render_draw_race):
+// one player's main view and two players' one above the other, as much as their views are wider; the others, the game's.
+extern "C" float eb_view_scale(uint8_t* rdram) {
+    const int32_t views = MEM_W(0, num_views);
+    if (views == 1 || (views == 2 && MEM_W(0, inset_view_active) != 0 && MEM_W(0, cur_view) == 0)) {
+        return one_player;
+    }
+    if (views == 2 && split_horizontal(rdram)) {
+        return two_players;
+    }
+    return 1.0f;
+}
+
+// How much wider than the game's own the race's culling is (above): with Original or in a window no wider than 4:3,
+// 512/472 with one screen, the view spanning the border's 40 pixels too, and 512/400 with two one above the other; with
+// Expand that times how much wider than 4:3 the window is. The views the game keeps (side by side, three or four
+// players) keep its culling.
 extern "C" float eb_cull_scale(uint8_t* rdram) {
-    float scale = 512.0f / 472.0f;
+    const int32_t screens = MEM_W(0, num_screens);
+    float scale;
+    if (screens == 1) {
+        scale = one_player;
+    }
+    else if (screens == 2 && split_horizontal(rdram)) {
+        scale = two_players;
+    }
+    else {
+        return 1.0f;
+    }
     if (ultramodern::renderer::get_graphics_config().ar_option == ultramodern::renderer::AspectRatio::Expand) {
         int width = 0;
         int height = 0;
