@@ -1,0 +1,20 @@
+# The save run of the save check (with tools/load_plan.txt), which then quits the program as a player does: Start
+# through the title to the main menu (the screen word 0x800F5164 = 0x800CE0DC), Options (0x800CE058), and Drones
+# turned off on it (gSaveData.options, the byte at 0x800F2564, gains 0x10), then B back to the main menu: leaving the
+# options screen writes the options' EEPROM blocks and the checksum.
+0 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 90 Enter
+4 key Up
+5 key Up
+6 key Space
+7 until 0x800F5164 0xFFFFFFFF 0x800CE058 10
+10 key Up
+11 key Up
+11.5 key Right
+12.5 key Space
+13.5 until 0x800F2564 0x10000000 0x10000000 3
+14 shot drones_off
+15 key Shift
+16 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 10
+16.5 saves changed 15
+18 shot menu
+19 end

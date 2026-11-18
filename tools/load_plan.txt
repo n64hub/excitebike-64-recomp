@@ -1,0 +1,24 @@
+# The load run of the save check, after tools/save_plan.txt: the program started again in the same folder, its saves
+# behind symlinks as a synced folder shares them: Drones' 0x10 in gSaveData.options (the byte at 0x800F2564) comes
+# only off the EEPROM, read as the game boots, and is read before any key. `saves same` comes before Start too: the
+# title's attract race behind it ends with the race's save (event_exit's save_write), as on a console, which writes
+# the same bytes and so moves the runtime's .bak. Then Drones is turned on again and the options written through the
+# links.
+0 until 0x800F2564 0x10000000 0x10000000 60
+0.5 shot title
+1 saves same
+2 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 90 Enter
+6 key Up
+7 key Up
+8 key Space
+9 until 0x800F5164 0xFFFFFFFF 0x800CE058 10
+12 key Up
+13 key Up
+13.5 key Right
+14.5 key Space
+15.5 until 0x800F2564 0x10000000 0x00000000 3
+16 shot drones_on
+17 key Shift
+18 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 10
+18.5 saves changed 15
+20 end
