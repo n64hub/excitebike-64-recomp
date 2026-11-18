@@ -81,6 +81,15 @@ set(ULTRAMODERN_VIS_WAIT_FOR_RENDERER ON)
 # RT64 interpolates the RSP tasks the game draws a frame in as one frame (RT64_GAME_FRAME_WORKLOADS), on with
 # Emscripten and here on the desktop too, so the desktop build draws as the page does.
 set(RT64_GAME_FRAME_WORKLOADS ON)
+# The frames RT64 draws between the game's pair its transforms as the page's do, with three options off on a desktop
+# build and on with Emscripten (N64Recomp-browser's docs/forks.md): no pair across a camera cut (RT64_SKIP_CAMERA_CUTS),
+# none between two places that swapped what they drew (RT64_SKIP_PLACE_SWAPS), none with a transform that collapses what
+# it draws (RT64_SKIP_COLLAPSED_MATCHES). Without them the race's frames between drew the riders and their shadows
+# partway from one place to another, 14 frames unlike both of their neighbours in a race's minute and a half
+# (N64Recomp-browser's tools/frame_check.mjs), where with them it found 5.
+set(RT64_SKIP_CAMERA_CUTS ON)
+set(RT64_SKIP_PLACE_SWAPS ON)
+set(RT64_SKIP_COLLAPSED_MATCHES ON)
 # Up to four players, each a port of their own (src/main/main.cpp, get_connected_device_info): the game turns
 # RecompFrontend's single-player mode off, and plays as single-player mode until players are assigned, as with
 # Emscripten, so a player alone needn't assign their pad or keyboard first. And until then each pad plays a port of its
@@ -214,6 +223,7 @@ target_sources(Excitebike64Recompiled PRIVATE
     ${CMAKE_SOURCE_DIR}/src/game/config.cpp
     ${CMAKE_SOURCE_DIR}/src/game/boot.cpp
     ${CMAKE_SOURCE_DIR}/src/game/libultra.cpp
+    ${CMAKE_SOURCE_DIR}/src/game/rumble_pak.cpp
     ${CMAKE_SOURCE_DIR}/src/game/widescreen.cpp
     ${CMAKE_SOURCE_DIR}/src/game/hud.cpp
 )

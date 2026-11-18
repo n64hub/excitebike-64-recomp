@@ -10,10 +10,19 @@
 // the picture keeps its proportions and shows the track where the border was. At 4:3 that is the only change: the
 // sides' 20 pixels show the track, the top and bottom borders stay. Split screen's layouts and the inset view are left
 // as the game has them.
+//
+// And the race culls its world to that view: the stadium's sections and objects to within half as far across as ahead
+// of the camera (arn_cull_models), an outdoor track's sections to those with a corner within sCullSlope (0x68/256)
+// across of its depth (tube_cull_sections). Both are widened by eb_cull_scale (us.toml's hooks): 512/472 for the view
+// across the screen's whole width, times the window's aspect ratio over 4:3 with the Graphics tab's Aspect Ratio Expand,
+// where RT64 widens the picture to the window. At 32:9 the stands, barriers and track past the 4:3 frame's sides came
+// and went with the camera.
 
 #include <cstdint>
 
 #include "recomp.h"
+#include "ultramodern/config.hpp"
+#include "recompui/recompui.h"
 
 #include "eb.h"
 
@@ -32,4 +41,22 @@ void eb::widen_views(uint8_t* rdram) {
     widen(rdram, layout_1p_hi_res);
     widen(rdram, layout_1p);
     widen(rdram, view_layouts);
+}
+
+// How much wider than the game's own the race's culling is (above): 512/472 with Original or in a window no wider than
+// 4:3, the view spanning the border's 40 pixels too, and with Expand that times how much wider than 4:3 the window is.
+extern "C" float eb_cull_scale(uint8_t* rdram) {
+    float scale = 512.0f / 472.0f;
+    if (ultramodern::renderer::get_graphics_config().ar_option == ultramodern::renderer::AspectRatio::Expand) {
+        int width = 0;
+        int height = 0;
+        recompui::get_window_size(width, height);
+        if ((width > 0) && (height > 0)) {
+            const float wide = (float(width) / float(height)) / (4.0f / 3.0f);
+            if (wide > 1.0f) {
+                scale *= wide;
+            }
+        }
+    }
+    return scale;
 }

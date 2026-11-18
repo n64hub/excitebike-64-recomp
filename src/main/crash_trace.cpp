@@ -1,7 +1,9 @@
 // On Windows, prints where the program crashed to stderr: the exception and each frame of the crashing thread's stack,
 // named from the .pdb beside the exe. Recompiled functions carry the game's names (syms/), so a trace points at the
 // game code that crashed. --stacks <seconds> (development) prints every thread's stack that often, for a game that
-// hangs without crashing.
+// hangs without crashing. On Linux, a crash (SIGSEGV, SIGBUS, SIGILL, SIGFPE, SIGABRT) prints the address it faulted on
+// and each frame of the crashing thread's stack, as glibc names it and as its offset in the module that holds it, which
+// `addr2line -f -C -e <module> <offset>` names from the build's symbols; then the signal does what it would have.
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -105,6 +107,52 @@ void start_stack_dumps(double seconds) {
         }
     }).detach();
 }
+#elif defined(__linux__)
+#include <csignal>
+#include <cstdio>
+#include <cstring>
+#include <dlfcn.h>
+#include <execinfo.h>
+#include <sys/syscall.h>
+#include <unistd.h>
+
+// Only what a signal handler may call: fprintf to an unbuffered stderr, backtrace (loaded below before any crash),
+// dladdr. Each frame is printed once named and once as <module> +<offset>.
+static void print_crash(int sig, siginfo_t* info, void*) {
+    void* frames[64];
+    const int count = backtrace(frames, 64);
+    fprintf(stderr, "crash: signal %d (%s) at address %p, thread %ld\n", sig, strsignal(sig), info ? info->si_addr : nullptr,
+        (long)syscall(SYS_gettid));
+    backtrace_symbols_fd(frames, count, STDERR_FILENO);
+    for (int i = 0; i < count; i++) {
+        Dl_info where{};
+        if (dladdr(frames[i], &where) && (where.dli_fname != nullptr)) {
+            fprintf(stderr, "  #%d %s +0x%lx\n", i, where.dli_fname, (unsigned long)((char*)frames[i] - (char*)where.dli_fbase));
+        }
+    }
+    fflush(stderr);
+    signal(sig, SIG_DFL);
+    raise(sig);
+}
+
+void install_crash_trace() {
+    void* warm[1];
+    backtrace(warm, 1); // loads libgcc's unwinder now, not inside the handler
+    static char alt_stack[1 << 16]; // a stack overflow's handler runs on a stack of its own
+    stack_t ss{};
+    ss.ss_sp = alt_stack;
+    ss.ss_size = sizeof(alt_stack);
+    sigaltstack(&ss, nullptr);
+    struct sigaction sa{};
+    sa.sa_sigaction = print_crash;
+    sa.sa_flags = SA_SIGINFO | SA_ONSTACK;
+    sigemptyset(&sa.sa_mask);
+    static const int signals[] = { SIGSEGV, SIGBUS, SIGILL, SIGFPE, SIGABRT };
+    for (int sig : signals) {
+        sigaction(sig, &sa, nullptr);
+    }
+}
+void start_stack_dumps(double) {}
 #else
 void install_crash_trace() {}
 void start_stack_dumps(double) {}

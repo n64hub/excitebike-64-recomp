@@ -17,8 +17,10 @@ This repo is the game: its recompilation, the patches over it, the desktop build
   `patch_helpers.h` and `recompui_event_structs.h` are RecompFrontend's.
 - `src/`: RecompFrontend's main (`src/main/main.cpp`, with the GameEntry), the code section and patches it gives the
   runtime (`src/main/register_overlays.cpp`, `src/main/register_patches.cpp`), the game's start in place of its boot
-  loader (`src/game/boot.cpp`), the settings (`src/game/config.cpp`), and on Windows a stack trace on a crash
-  (`src/main/crash_trace.cpp`).
+  loader (`src/game/boot.cpp`), the settings (`src/game/config.cpp`), libultra functions the runtime leaves out
+  (`src/game/libultra.cpp`) and the Rumble Pak's answer to the game's probe (`src/game/rumble_pak.cpp`), the race's
+  widescreen culling and HUD (`src/game/widescreen.cpp`, `src/game/hud.cpp`), and a stack trace on a crash, on
+  Windows and Linux (`src/main/crash_trace.cpp`).
 - `lib/`: `excitebike64` (the decomp, for `syms/` and the patches' headers), `ultralib` (the libultra the decomp builds
   against, for its headers), upstream `rt64`, `N64ModernRuntime` and `RecompFrontend` at the commits
   N64Recomp-browser's web forks are built on, and `N64Recomp-browser` at a release tag. The web support every recomp's
@@ -66,3 +68,7 @@ This repo is the game: its recompilation, the patches over it, the desktop build
   ghosts, user tracks) is the runtime's, which answers that none is plugged in.
 - **Threads** (`main.cpp` names them): 0 libultra's PI and VI managers, 1 the idle thread and the scheduler (by
   priority), 3 the game's main at priority 10, 5 the scheduler's client.
+- **Scratch memory.** The game uses the framebuffer it isn't drawing and the Z buffer as scratch memory: a race's load
+  copies the track's models into the spare framebuffer (tubegfx.c's `tube_build_dlists`), and the height grids, the
+  map and the editor's save work in the Z buffer. Its CPU reads no frame it drew, so RT64's Render to RAM is off
+  (`main.cpp`): a frame copied back into RDRAM would land on that scratch.

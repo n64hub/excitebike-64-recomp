@@ -9,12 +9,18 @@
 //                    Excitebike
 //   screen()         the front end's screen (sCurScreen, 0x800F5164, into sScreens' 0x2C bytes a screen; the decomp's
 //                    include/structs/shell.h): 14 the title, 8 the main menu, 6 Season's rounds, 9 rider select
-//   racing()         whether a race is under way: the race state with its frame count (gRaceFrame, 0x800E8070) past
-//                    the countdown's three seconds
-//   setTrack(t)      makes the race rider select starts be on track t (the decomp's enum TrackId): gCurTrack
-//                    (0x800F0704) to gTracks' entry (0x800CBB50, 0xA0 bytes a track) and the season's round to it too
-//                    (gSeason, 0x800CB270: its cup's tracks[] at +8, its round at +0x64), since the game sets
-//                    gCurTrack from the round as a season's race starts. So a shader plan reaches every one of
+//   racing()         whether a race is under way: the race state in its racing phase (gRacePhase, 0x800E4098: 5,
+//                    past the track's intro and the fade in) with its frame count (gRaceFrame, 0x800E8070) past the
+//                    countdown. gRaceFrame alone isn't enough: it counts on through the track's intro, from where the
+//                    title's attract race left it, and starts again only as the race is set up
+//   screenState()    the front end screen's own state (gGame.screenState, 0x800F09F8): 5 the difficulty popup
+//   playersPopup()   whether the number of players popup is up (GAME_FLAG_PLAYERS_POPUP in gGame.flags, 0x800F0710)
+//   setTrack(t)      makes the race rider select starts be on track t (the decomp's enum TrackId): in a season the
+//                    round's track (gSeason, 0x800CB270: its cup's tracks[] at +8, its round at +0x64), which the
+//                    game sets gCurTrack (0x800F0704) from as the race starts; outside one gCurTrack itself, to
+//                    gTracks' entry (0x800CBB50, 0xA0 bytes a track). Not both: rider select draws from gCurTrack,
+//                    and moved under it to a later cup's outdoor track (11, 13 ... 19) the page's game thread read
+//                    out of bounds. So a shader plan reaches every one of
 //                    Season's tracks from its one menu path. The special tracks have modes of their own, which the
 //                    game sets up only through their menu's items, so a plan reaches them there (special()).
 //   special(i)       opens every item of the special tracks menu (gSpecialTracksItems, 0x800CDCB0, 0x10 bytes an
@@ -32,20 +38,23 @@
   const FRAMES = 0x800E2958, GAME_STATE = 0x800C3308, GAME_STATES = 0x800C3298, CUR_SCREEN = 0x800F5164;
   const SCREENS = 0x800CDF7C, RACE_FRAME = 0x800E8070, CUR_TRACK = 0x800F0704, TRACKS = 0x800CBB50;
   const SEASON = 0x800CB270, SPECIAL_ITEMS = 0x800CDCB0, SPECIAL_CURSOR = 0x800F0718, MAIN_CURSOR = 0x800F0714;
-  const DIFFICULTY = 0x800F0B20, CONT_COUNT = 0x800C326D, TOP_DIFFICULTY = 0x800F2560;
+  const DIFFICULTY = 0x800F0B20, CONT_COUNT = 0x800C326D, TOP_DIFFICULTY = 0x800F2560, RACE_PHASE = 0x800E4098;
+  const GAME_FLAGS = 0x800F0710, SCREEN_STATE = 0x800F09F8;
   window.clock = () => n64r(FRAMES);
   window.state = () => (n64r(GAME_STATE) - GAME_STATES) / 0x1C;
   window.screen = () => (n64r(CUR_SCREEN) - SCREENS) / 0x2C;
-  window.racing = () => state() === 1 && n64r(RACE_FRAME) > 240;
+  window.racing = () => state() === 1 && n64r(RACE_PHASE) === 5 && n64r(RACE_FRAME) > 240;
+  window.screenState = () => n64r(SCREEN_STATE);
+  window.playersPopup = () => (n64r(GAME_FLAGS) & 0x200) !== 0;
   const w16 = (a, v) => {
     const sh = (a & 2) ? 0 : 16;
     n64w(a & ~3, (n64r(a & ~3) & ~(0xFFFF << sh)) | ((v & 0xFFFF) << sh));
   };
   const r16 = (a) => (n64r(a & ~3) >>> ((a & 2) ? 0 : 16)) & 0xFFFF;
   window.setTrack = (track) => {
-    n64w(CUR_TRACK, TRACKS + track * 0xA0);
     const season = n64r(SEASON);
     if (season !== 0) w16(n64r(season) + 8 + r16(season + 0x64) * 2, track);
+    else n64w(CUR_TRACK, TRACKS + track * 0xA0);
     return `track ${track}`;
   };
   window.special = (i) => {

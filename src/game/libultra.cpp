@@ -14,8 +14,9 @@ extern "C" void osPiReadIo_recomp(uint8_t* rdram, recomp_context* ctx) {
     ctx->r2 = 0;
 }
 
-// The controller's accessory bus. The runtime plugs no Controller Pak in (its osPfs functions answer PFS_ERR_NOPACK),
-// so neither do these, which the game's own Controller Pak code (pak.c) calls: osPfsIsPlug reports no pak in any port.
+// The controller's accessory bus, which the game's own Controller Pak code (pak.c) calls. No Controller Pak is plugged
+// in (src/game/rumble_pak.cpp's osPfs functions answer PFS_ERR_NOPACK), so these answer the same, and osPfsIsPlug
+// reports no pak in any port.
 static constexpr int32_t PFS_ERR_NOPACK = 1;
 
 extern "C" void __osPfsGetStatus_recomp(uint8_t* rdram, recomp_context* ctx) {

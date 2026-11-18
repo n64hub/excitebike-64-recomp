@@ -174,6 +174,20 @@ func = "render_draw_race"
 before_vram = 0x80004254
 text = "{ if (!(MEM_W(0, (gpr)(int32_t)0x800C2ED4) == 2 && MEM_W(0, (gpr)(int32_t)0x800C2CC4) == 0) && MEM_W(0, (gpr)(int32_t)0x800C2ED8) == 0) { union { uint32_t u; float f; } a; a.u = (uint32_t)ctx->r7; a.f *= 512.0f / 472.0f; ctx->r7 = (int32_t)a.u; } }"
 
+# The race's culling widened with its view and the picture (src/game/widescreen.cpp's eb_cull_scale), with one screen
+# (gNumScreens, 0x800E21B8): in arn_cull_models the half-width a stadium model's centre may lie across, half its depth
+# ahead, in $a0 where every one-screen path compares it with the centre's side; in tube_cull_sections sCullSlope
+# (0x800C9F8C), which it has just set to 0x68 and which its test of each section's corners reads.
+[[patches.hook]]
+func = "arn_cull_models"
+before_vram = 0x800242C4
+text = "{ float eb_cull_scale(uint8_t*); if (MEM_W(0, (gpr)(int32_t)0x800E21B8) == 1) ctx->r4 = (int32_t)((float)(int32_t)ctx->r4 * eb_cull_scale(rdram)); }"
+
+[[patches.hook]]
+func = "tube_cull_sections"
+before_vram = 0x8002692C
+text = "{ float eb_cull_scale(uint8_t*); if (MEM_W(0, (gpr)(int32_t)0x800E21B8) == 1) MEM_W(0, (gpr)(int32_t)0x800C9F8C) = (int32_t)(0x68 * eb_cull_scale(rdram)); }"
+
 # The race's HUD at the wide picture's sides (src/game/hud.cpp): on both sides of render_draw_race's HUD, the minimap and
 # event_draw_hud for each view, with gdl ($fp). The first is where the HUD's branch starts (credits off, not the
 # attract mode's race), before it asks whether to draw the minimap; the second is after the loop's last command.

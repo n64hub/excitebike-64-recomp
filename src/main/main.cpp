@@ -96,8 +96,8 @@ ultramodern::gfx_callbacks_t::gfx_data_t create_gfx() {
 // A port has a controller when its player is assigned, or until players are assigned when it is port 1 or a connected
 // pad's (RECOMPINPUT_PADS_IN_ORDER: the second pad connected plays port 2, and so on), as a console has a controller
 // in each port a pad is plugged into: the game offers riders for those ports alone, up to four. Each has a Rumble Pak
-// in it, which the game starts with osMotorInit (the runtime's, to that port's pad): with no pak the runtime's
-// osMotorInit answers PFS_ERR_NOPACK and the game never rumbles. The game keeps its save on the cartridge's EEPROM, and
+// in it, which the game finds with osPfsInitPak (src/game/rumble_pak.cpp) and starts with osMotorInit (the runtime's, to
+// that port's pad): with no pak the runtime's osMotorInit answers PFS_ERR_NOPACK and the game never rumbles. The game keeps its save on the cartridge's EEPROM, and
 // a Controller Pak only for ghosts and user tracks a player copies there, which the Rumble Pak leaves out. The strength
 // is the General tab's.
 ultramodern::input::connected_device_info_t get_connected_device_info(int controller_num) {
@@ -562,17 +562,13 @@ int main(int argc, char** argv) {
     // Presented at the VI (Skip Buffering), not as soon as a task fills a framebuffer (Present Early), which shows a
     // frame drawn in several tasks before its last.
     //
-    // Render to RAM, RT64's copy of each list's frame into RDRAM: the game's CPU reads a frame it drew for the
-    // transition between shots, which turns the last frame of the shot over as a card, and without the copy that card
-    // is black. On the page the copy lands a list late, as F-Zero X's does: the transition takes the frame being left,
-    // which a list or two before is the same picture, and with the exact copy every list waits for the GPU's readback.
-    // The desktop build keeps RT64's exact copy.
+    // No Render to RAM, RT64's copy of each list's frame into RDRAM: the game's CPU never reads a frame it drew (main.c's
+    // one read is a debug screenshot that writes nowhere), and it uses the framebuffer it isn't drawing as scratch
+    // memory, copying a track's models into it as the race loads (tubegfx.c's tube_build_dlists), which a frame copied
+    // there afterwards would overwrite.
     ultramodern::renderer::callbacks_t renderer_callbacks{
         .create_render_context = [](uint8_t* rdram, ultramodern::renderer::WindowHandle window_handle, bool developer_mode) {
-            recompui::renderer::set_render_to_ram(true);
-#ifdef __EMSCRIPTEN__
-            recompui::renderer::set_render_to_ram_late(true);
-#endif
+            recompui::renderer::set_render_to_ram(false);
             return recompui::renderer::create_render_context(rdram, window_handle, ultramodern::renderer::PresentationMode::SkipBuffering, developer_mode);
         },
     };

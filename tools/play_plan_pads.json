@@ -6,13 +6,16 @@
   "pad, whose ids are longer than SDL keeps and which SDL renames, so the page has to find each by its place in",
   "navigator.getGamepads(). Each pad plays a port of its own in the order they were plugged in",
   "(RECOMPINPUT_PADS_IN_ORDER), the keyboard port 1 beside the first, so at the main menu the game counts four",
-  "controllers (gContCount, 0x800C326D). Exhibition then, Novice, Kyoto, and at the players popup the plan makes it 4",
-  "players (gGame.numPlayers, 0x800F074C), which the popup offers as there are controllers; at rider select each port",
-  "picks with its own pad's A, and the race is a split screen of 4 views. In it each pad in turn holds A, the throttle,",
-  "alone, and the plan prints the players' riders' speeds (gRiders, 0x800E4160, 0x7E0 bytes a rider, its speed at",
-  "+0x420): that pad's rider alone goes, so each controller plays its own port's rider. Then all of them ride for half a",
-  "minute, and the pause menu is opened and closed. padRumbles() says what reached each pad's rumble: the game rumbles a",
-  "rider's pad as they land hard or crash."
+  "controllers (gContCount, 0x800C326D). Exhibition then, Novice, Kyoto, each screen pressed for until it has come",
+  "(tools/shader_survey.js's screenState(), screen() and playersPopup()), since the main menu drops a press while it",
+  "zooms in over the title, and at the players popup the plan makes it 4 players (gGame.numPlayers, 0x800F074C), which",
+  "the popup offers as there are controllers; at rider select each port picks with its own pad's A, and the race is a",
+  "split screen of 4 views. The plan prints each player's controller (gGame.playerPad, 0x800F09D8) and each",
+  "controller's player (gGame.padPlayer, 0x800F09DC); then each pad in turn holds A, the throttle, alone, and the plan",
+  "prints the players' riders' speeds (gRiders, 0x800E4160, 0x7E0 bytes a rider, its speed at +0x420): that pad's rider",
+  "alone goes, so each controller plays its own port's rider. Then all of them ride for half a minute, and the pause menu",
+  "is opened and closed. padRumbles() says what reached each pad's rumble: the game rumbles a rider's pad as they land",
+  "hard or crash (its Rumble Pak found as src/game/rumble_pak.cpp says)."
  ],
  "page": "Excitebike64Recompiled.html",
  "load": [
@@ -88,46 +91,74 @@
  ],
  "play": [
   [
+   "need",
+   "until(() => screen() === 8, 20000)"
+  ],
+  [
    "eval",
    "menu(1)"
   ],
   [
-   "key",
+   "pressUntil",
    "Space",
    " ",
-   32
+   32,
+   150,
+   1500,
+   "screenState() === 5",
+   15000
+  ],
+  [
+   "need",
+   "screenState() === 5"
   ],
   [
    "wait",
-   1500
+   500
   ],
   [
    "shot",
    "difficulty.png"
   ],
   [
-   "key",
+   "pressUntil",
    "Space",
    " ",
-   32
+   32,
+   150,
+   1500,
+   "screen() >= 10 && screen() <= 13",
+   15000
+  ],
+  [
+   "need",
+   "screen() >= 10 && screen() <= 13"
   ],
   [
    "wait",
-   3000
+   1000
   ],
   [
    "shot",
    "tracks.png"
   ],
   [
-   "key",
+   "pressUntil",
    "Space",
    " ",
-   32
+   32,
+   150,
+   1500,
+   "playersPopup()",
+   15000
+  ],
+  [
+   "need",
+   "playersPopup()"
   ],
   [
    "wait",
-   1500
+   500
   ],
   [
    "eval",
@@ -154,6 +185,10 @@
    1500,
    "screen() === 9",
    30000
+  ],
+  [
+   "need",
+   "screen() === 9 && n64r(0x800F074C) === 4"
   ],
   [
    "wait",
@@ -195,6 +230,10 @@
   [
    "shot",
    "race_start.png"
+  ],
+  [
+   "eval",
+   "(() => { const b = (a) => [0, 1, 2, 3].map((k) => (n64r(a) << (k * 8)) >> 24).join(' '); return `playerPad ${b(0x800F09D8)}, padPlayer ${b(0x800F09DC)}`; })()"
   ],
   [
    "eval",
