@@ -201,3 +201,16 @@ text = "{ void eb_hud_begin(uint8_t*, uint32_t); eb_hud_begin(rdram, (uint32_t)c
 func = "render_draw_race"
 before_vram = 0x80006D58
 text = "{ void eb_hud_end(uint8_t*, uint32_t); eb_hud_end(rdram, (uint32_t)ctx->r30); }"
+
+# The main menu's sponsor logo across the whole window (src/game/menu_logo.cpp): on both sides of the render_draw_image
+# call that draws it in shell_draw_screen, which the track lists' right arrow shares (a jal with a nop in its delay
+# slot), its arguments set before it and the list's end in $v0 after.
+[[patches.hook]]
+func = "shell_draw_screen"
+before_vram = 0x8007DEBC
+text = "{ void eb_logo_begin(uint8_t*, recomp_context*); eb_logo_begin(rdram, ctx); }"
+
+[[patches.hook]]
+func = "shell_draw_screen"
+before_vram = 0x8007DEC4
+text = "{ void eb_logo_end(uint8_t*, uint32_t); eb_logo_end(rdram, (uint32_t)ctx->r2); }"

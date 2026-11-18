@@ -90,6 +90,11 @@ set(RT64_GAME_FRAME_WORKLOADS ON)
 set(RT64_SKIP_CAMERA_CUTS ON)
 set(RT64_SKIP_PLACE_SWAPS ON)
 set(RT64_SKIP_COLLAPSED_MATCHES ON)
+# What lies past the framebuffer's sides counts only to them when RT64 judges what covers a frame's whole width
+# (RT64_SCISSOR_INSIDE_FRAMEBUFFER, off on a desktop build and on with Emscripten): the main menu's sponsor logo draws
+# under a scissor as wide as the window (src/game/menu_logo.cpp), and without it the menu's frame and items were drawn
+# stretched to the window's width.
+set(RT64_SCISSOR_INSIDE_FRAMEBUFFER ON)
 # Up to four players, each a port of their own (src/main/main.cpp, get_connected_device_info): the game turns
 # RecompFrontend's single-player mode off, and plays as single-player mode until players are assigned, as with
 # Emscripten, so a player alone needn't assign their pad or keyboard first. And until then each pad plays a port of its
@@ -226,6 +231,7 @@ target_sources(Excitebike64Recompiled PRIVATE
     ${CMAKE_SOURCE_DIR}/src/game/rumble_pak.cpp
     ${CMAKE_SOURCE_DIR}/src/game/widescreen.cpp
     ${CMAKE_SOURCE_DIR}/src/game/hud.cpp
+    ${CMAKE_SOURCE_DIR}/src/game/menu_logo.cpp
 )
 if (EB_PATCHES)
     target_sources(Excitebike64Recompiled PRIVATE ${CMAKE_SOURCE_DIR}/src/main/register_patches.cpp)

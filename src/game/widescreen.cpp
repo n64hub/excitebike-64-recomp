@@ -93,16 +93,19 @@ extern "C" float eb_cull_scale(uint8_t* rdram) {
     else {
         return 1.0f;
     }
-    if (ultramodern::renderer::get_graphics_config().ar_option == ultramodern::renderer::AspectRatio::Expand) {
-        int width = 0;
-        int height = 0;
-        recompui::get_window_size(width, height);
-        if ((width > 0) && (height > 0)) {
-            const float wide = (float(width) / float(height)) / (4.0f / 3.0f);
-            if (wide > 1.0f) {
-                scale *= wide;
-            }
-        }
+    return scale * eb::window_wide();
+}
+
+float eb::window_wide() {
+    if (ultramodern::renderer::get_graphics_config().ar_option != ultramodern::renderer::AspectRatio::Expand) {
+        return 1.0f;
     }
-    return scale;
+    int width = 0;
+    int height = 0;
+    recompui::get_window_size(width, height);
+    if ((width <= 0) || (height <= 0)) {
+        return 1.0f;
+    }
+    const float wide = (float(width) / float(height)) / (4.0f / 3.0f);
+    return wide > 1.0f ? wide : 1.0f;
 }

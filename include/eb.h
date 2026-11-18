@@ -18,8 +18,12 @@ namespace eb {
     // The game image, unpacked into RDRAM as the boot loader does (boot.cpp), before the game's entry runs.
     void unpack_game(uint8_t* rdram);
 
-    // The race's one-player view widened to the screen's width, over the unpacked image (widescreen.cpp).
+    // The race's views widened to the screen's width, over the unpacked image (widescreen.cpp).
     void widen_views(uint8_t* rdram);
+
+    // How much wider than 4:3 the window is with the Graphics tab's Aspect Ratio Expand, where RT64 widens the picture
+    // to it; 1 with Original or in a window no wider than 4:3 (widescreen.cpp).
+    float window_wide();
 }
 
 #endif
