@@ -164,3 +164,12 @@ text = "{ void yield_self(uint8_t*); if (ctx->r2 != 0) yield_self(rdram); }"
 func = "font_load_race_set"
 before_vram = 0x800481C8
 text = "{ void yield_self(uint8_t*); if (ctx->r2 != 0) yield_self(rdram); }"
+
+# The race's one-player projection widened with its view (src/game/widescreen.cpp, which widens the view from 472 of
+# the screen's 512 pixels to all of them): the aspect render_draw_race gives guPerspective (320 or, in the high
+# resolution mode, 640 over the screen's height), in $a3 here, times 512/472, for the main view alone. Split screen's
+# two views (gNumViews 2 with gInsetViewActive 0) and the inset view (gCurView 1) keep the game's.
+[[patches.hook]]
+func = "render_draw_race"
+before_vram = 0x80004254
+text = "{ if (!(MEM_W(0, (gpr)(int32_t)0x800C2ED4) == 2 && MEM_W(0, (gpr)(int32_t)0x800C2CC4) == 0) && MEM_W(0, (gpr)(int32_t)0x800C2ED8) == 0) { union { uint32_t u; float f; } a; a.u = (uint32_t)ctx->r7; a.f *= 512.0f / 472.0f; ctx->r7 = (int32_t)a.u; } }"

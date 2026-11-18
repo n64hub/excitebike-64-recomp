@@ -129,5 +129,6 @@ void eb::unpack_game(uint8_t* rdram) {
 
 extern "C" void eb_entrypoint(uint8_t* rdram, recomp_context* ctx) {
     eb::unpack_game(rdram);
+    eb::widen_views(rdram);
     recomp_entrypoint(rdram, ctx);
 }
