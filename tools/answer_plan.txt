@@ -1,0 +1,20 @@
+# The press reaching the picture (answer steps): the main menu's cursor moved by the keyboard, the D-pad and the stick,
+# each press and its way back, 6 s apart. A cursor's move changes 13-14% of the picture, while the picture beside the
+# list goes on slowly changing by itself (up to 8.5% in a second), so an answer is read where the picture held still.
+# A race's camera stays behind the bike, with no view of its own to turn, and the pause menu marks its item by a
+# colour too small to read, so the main menu is where a press shows. The build that becomes v0.1.0 passes it: each
+# of the 10 answered in 83-114 ms and settled within 21 ms of the release.
+0 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 90 Enter
+2 shot menu
+3 answer menu-key-down key:Down 1 0.15
+9 answer menu-key-up key:Up 1 0.15
+15 answer menu-dpad-down dpdown 1 0.15
+21 answer menu-dpad-up dpup 1 0.15
+27 answer menu-stick-down lefty 32767 0.2
+33 answer menu-stick-up lefty -32768 0.2
+39 answer menu-stick-down-2 lefty 32767 0.2
+45 answer menu-stick-up-2 lefty -32768 0.2
+51 answer menu-stick-down-3 lefty 32767 0.2
+57 answer menu-stick-up-3 lefty -32768 0.2
+63 shot menu_after
+64 end

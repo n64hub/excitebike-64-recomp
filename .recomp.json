@@ -1,0 +1,24 @@
+{
+  "$schema": "https://recomp.fyi/schema/v1.json",
+  "game": "Excitebike 64",
+  "system": "N64",
+  "type": "recomp",
+  "original": {
+    "region": "USA",
+    "sha1": "c2fac422af135409c1b38569b309f9d452c81c35"
+  },
+  "project": "Excitebike 64: Recompiled",
+  "status": "released",
+  "targets": [
+    "Windows",
+    "Linux",
+    "Browser"
+  ],
+  "toolchain": "N64recomp",
+  "links": [
+    {
+      "label": "Play in a browser",
+      "url": "https://n64hub.com/excitebike-64/"
+    }
+  ]
+}

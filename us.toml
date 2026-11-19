@@ -165,14 +165,42 @@ func = "font_load_race_set"
 before_vram = 0x800481C8
 text = "{ void yield_self(uint8_t*); if (ctx->r2 != 0) yield_self(rdram); }"
 
-# The race's projection widened with its view (src/game/widescreen.cpp, which widens one player's view from 472 of the
-# screen's 512 pixels to all of them, and two players' one above the other from 400): the aspect render_draw_race gives
-# guPerspective (320 or, in the high resolution mode, 640 over the screen's height), in $a3 here, times eb_view_scale:
-# 512/472 or 512/400 for those views, 1 for those the game keeps (side by side, three or four players, the inset view).
+# The audio interface's FIFO full, as the game's sound loops read it after osAiGetStatus ($v0): n64snd_update's and
+# nes_audio_update's (src/main/main.cpp's eb_ai_status says why).
+[[patches.hook]]
+func = "n64snd_update"
+before_vram = 0x800BC744
+text = "{ void eb_ai_status(uint8_t*, recomp_context*); eb_ai_status(rdram, ctx); }"
+
+[[patches.hook]]
+func = "nes_audio_update"
+before_vram = 0x800A2274
+text = "{ void eb_ai_status(uint8_t*, recomp_context*); eb_ai_status(rdram, ctx); }"
+
+# The race's projection widened and heightened with its view (src/game/widescreen.cpp, which has each view fill its part
+# of the screen): the field of view and the aspect render_draw_race gives guPerspective, in $a2 and $a3 here.
 [[patches.hook]]
 func = "render_draw_race"
 before_vram = 0x80004254
-text = "{ float eb_view_scale(uint8_t*); union { uint32_t u; float f; } a; a.u = (uint32_t)ctx->r7; a.f *= eb_view_scale(rdram); ctx->r7 = (int32_t)a.u; }"
+text = "{ void eb_view_projection(uint8_t*, recomp_context*); eb_view_projection(rdram, ctx); }"
+
+# The full views in place for the race's 3D, and the game's boxes for its HUD, the track's intro, the pause menu and the
+# menus drawn over a race (src/game/widescreen.cpp's eb_view_rects): at render_draw_race's start and
+# render_update_viewports', which makes the views' rectangles and viewports, and after render_draw_race's riders.
+[[patches.hook]]
+func = "render_draw_race"
+before_vram = 0x80003CC0
+text = "{ void eb_view_rects(uint8_t*, int32_t); eb_view_rects(rdram, 1); }"
+
+[[patches.hook]]
+func = "render_update_viewports"
+before_vram = 0x8000B028
+text = "{ void eb_view_rects(uint8_t*, int32_t); eb_view_rects(rdram, 1); }"
+
+[[patches.hook]]
+func = "render_draw_race"
+before_vram = 0x80006BFC
+text = "{ void eb_view_rects(uint8_t*, int32_t); eb_view_rects(rdram, 0); }"
 
 # The race's culling widened with its view and the picture (src/game/widescreen.cpp's eb_cull_scale, 1 where the game's
 # view is kept): in arn_cull_models the half-width a stadium model's centre may lie across, half its depth ahead (and
@@ -188,6 +216,18 @@ text = "{ float eb_cull_scale(uint8_t*); ctx->r4 = (int32_t)((float)(int32_t)ctx
 func = "tube_cull_sections"
 before_vram = 0x8002692C
 text = "{ float eb_cull_scale(uint8_t*); MEM_W(0, (gpr)(int32_t)0x800C9F8C) = (int32_t)((float)MEM_W(0, (gpr)(int32_t)0x800C9F8C) * eb_cull_scale(rdram)); }"
+
+# The track editor out to the window's edges (src/game/editor.cpp): at edit_draw's entry, with pgdl ($a2), and before it
+# returns, after its last store of gdl ($fp) to *pgdl.
+[[patches.hook]]
+func = "edit_draw"
+before_vram = 0x800962F8
+text = "{ void eb_edit_begin(uint8_t*, uint32_t); eb_edit_begin(rdram, (uint32_t)ctx->r6); }"
+
+[[patches.hook]]
+func = "edit_draw"
+before_vram = 0x80097438
+text = "{ void eb_edit_end(uint8_t*, uint32_t); eb_edit_end(rdram, (uint32_t)ctx->r30); }"
 
 # The race's HUD at the wide picture's sides (src/game/hud.cpp): on both sides of render_draw_race's HUD, the minimap and
 # event_draw_hud for each view, with gdl ($fp). The first is where the HUD's branch starts (credits off, not the
@@ -231,6 +271,18 @@ func = "render_draw_race"
 before_vram = 0x80005138
 text = "{ void eb_sky_end(uint8_t*, uint32_t); eb_sky_end(rdram, (uint32_t)ctx->r2); }"
 
+# The fades across the whole window (src/game/wipe.cpp): at screen_draw_wipe's entry (the list in $a0, before the
+# copy to $t7) and before its return (the list's end in $v0, set by the instruction before).
+[[patches.hook]]
+func = "screen_draw_wipe"
+before_vram = 0x800733E4
+text = "{ void eb_wipe_begin(uint8_t*, uint32_t); eb_wipe_begin(rdram, (uint32_t)ctx->r4); }"
+
+[[patches.hook]]
+func = "screen_draw_wipe"
+before_vram = 0x80073618
+text = "{ void eb_wipe_end(uint8_t*, uint32_t); eb_wipe_end(rdram, (uint32_t)ctx->r2); }"
+
 # The main menu's sponsor logo across the whole window (src/game/menu_logo.cpp): on both sides of the render_draw_image
 # call that draws it in shell_draw_screen, which the track lists' right arrow shares (a jal with a nop in its delay
 # slot), its arguments set before it and the list's end in $v0 after.
@@ -243,3 +295,16 @@ text = "{ void eb_logo_begin(uint8_t*, recomp_context*); eb_logo_begin(rdram, ct
 func = "shell_draw_screen"
 before_vram = 0x8007DEC4
 text = "{ void eb_logo_end(uint8_t*, uint32_t); eb_logo_end(rdram, (uint32_t)ctx->r2); }"
+
+# The boot's logos and notices kept at 4:3 (src/game/splash.cpp): on both sides of the render_draw_image call that
+# draws the screen's background in shell_draw, the list in $a3 and the screen in $s7 before it, the list's end in $v0
+# after.
+[[patches.hook]]
+func = "shell_draw"
+before_vram = 0x80088480
+text = "{ void eb_splash_begin(uint8_t*, uint32_t, uint32_t); eb_splash_begin(rdram, (uint32_t)ctx->r7, (uint32_t)ctx->r23); }"
+
+[[patches.hook]]
+func = "shell_draw"
+before_vram = 0x80088488
+text = "{ void eb_splash_end(uint8_t*, uint32_t); eb_splash_end(rdram, (uint32_t)ctx->r2); }"

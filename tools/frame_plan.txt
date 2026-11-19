@@ -1,0 +1,273 @@
+# Excitebike 64's frame-dump plan: one run of the desktop build through every screen a player meets, played in a 16:9,
+# a 4:3 and a 32:9 window while the build dumps its frames, the three dumps then checked against each other by machine.
+# A check fails only what a plan plays, so a scene a player reports a fault in that this doesn't reach is added here by
+# the work that fixes it.
+# Each line is a step at seconds since the program started: `key <name>` presses and releases a key in the window,
+# `down <name>` and `up <name>` hold and release one, `shot <name>` captures the window, `poke <addr> <value>` writes a
+# 32-bit word of RDRAM, and `until <addr> <mask> <value> <timeout s> [key]` waits until the word at addr anded with
+# mask is value, pressing key every 1.5 s meanwhile if it isn't yet; the later steps move on by its wait, so the three
+# runs keep step with the game, not the clock, and an until unmet by its timeout fails the run. Addresses are the USA
+# Rev 1 ROM's (syms/). Keys are the keyboard's defaults: Enter Start, Space A, Shift B, the arrows the stick.
+# The screen shown is the word at 0x800F5164, a Screen of the table at 0x800CDF7C, 0x2C bytes each: the main menu
+# 0x800CE0DC, Options 0x800CE058, Special Tracks 0x800CE0B0, Rider Select 0x800CE108, the title 0x800CE1E4. The game
+# state is the word at 0x800C3308: 0x800C32B4 a race, 0x800C3298 the menus. gGame is at 0x800F0710: its main menu
+# cursor at +4 (0x800F0714, the modes from 0 in the menu's order), Options' cursor in the high half of +0x448
+# (0x800F0B58). The pause menu is the word at 0x800E40B0 (1 its items, 4 Really Quit or Just Kidding), its cursor at
+# 0x800E4108 (3 Quit, then 0 Really Quit), and a race's phase at 0x800E4098 is 1 once its track's intro takes A and 6
+# once a quit is taken and it fades out; gGame's flags (0x800F0710) keep 0x80 set until the intro is over. A menu fades
+# in under its screen word and drops a key in the fade, and an intro its first frames, so each step whose miss would
+# leave the plan out of step presses until RAM shows it took. A race is held to the throttle from the moment it is under
+# way (the event's state at 0x800F0F48 is 5), with no steering, yet the three runs still race apart within seconds:
+# bike_update steps each rider by the retraces the last frame took, which differ with each window's drawing, so a
+# race's middle at 16:9 or 32:9 matches no frame of the 4:3 run's race. So each race, from there to the menu after it
+# (its pause menu, results and replay over it), is left out of the middle (`unchecked middle` to `checked middle`),
+# the credits' race too. The span starts as the race loads: its track's intro, and the rider screen before Time
+# Trials and the special tracks, follow a rider round the course by the same bike_update and ride apart within seconds
+# too (the first race's intro a view 1.6 s in a row at 16:9 that the 4:3 run never showed). And the title is left
+# out of where the HUD sits (`unchecked hud`): its logo stays in the middle at 4:3 in every window over its attract
+# race, which widens, as a HUD left at 4:3 would.
+# The track editor is left out of it too: its menu panel moves out to the window's left, but the 3D view beside it
+# holds still between the camera's moves, so the check finds pixels fixed all along the way the panel goes (98% at
+# its 4:3 place at 16:9, with no place out from it of its own) and reads it as a HUD left at 4:3. The replay, the
+# credits' race and the track editor are left out of black at the sides (`unchecked black`): each has near-black with
+# something drawn at its edge, which the check can't tell from black stopping short. The replay and the credits' race
+# are races, so each window's is its own: the replay's stadium roof with a grey post at the 16:9 window's right edge
+# as the camera pans (1.31 s in a row), the credits' dark forest at the view's side at 32:9 (0.11 s). The editor's
+# track view is black round the arena, out to the panel at the window's left edge (at 32:9, 72 of 144 rows black to
+# 109 pixels out from the view's side, held as long as the editor shows).
+# Two steps go past what keys can do in a few seconds. A race's end: the computer drives the player's bike home over
+# one lap, the word at 0x800E4848 written as 0x01000000 (gRiders[0].isCpu, which the game sets itself as a player
+# finishes, and the three bytes after it cleared) and the event's laps, the high half of 0x800F0F68, as 1 beside its 6
+# riders, both once the race is under way (the event's state at 0x800F0F48 is 5), since its start sets the laps; the
+# finish then waits for A. And the credits, left by Start after 17 s.
+
+# The boot: the Left Field logo, the Controller Paks' notice (left by Start), the legal screen, the title over its
+# attract race.
+0 until 0x800F5164 0xFFFFFFFF 0x800CE2C0 60
+1 shot 00_logo
+1 until 0x800F5164 0xFFFFFFFF 0x800CE344 30
+3 shot 01_pak_notice
+4 key Enter
+4 until 0x800F5164 0xFFFFFFFF 0x800CE2EC 15 Enter
+6 shot 02_legal
+7 until 0x800F5164 0xFFFFFFFF 0x800CE1E4 30 Enter
+7 unchecked hud
+9 shot 03_title
+17 shot 04_title_race
+17 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30 Enter
+17 checked hud
+18.5 shot 05_main_menu
+
+# Exhibition on Mountain Quarry: the difficulty, the track lists turned to Silver and back, the players' count, Rider
+# Select, the track's flyover and countdown, a stretch of racing, the pause menu and Quit.
+18.5 until 0x800F0714 0xFFFFFFFF 0x1 10 Down
+19.5 until 0x800F09F8 0xFFFFFFFF 0x5 10 Space
+20.5 shot 06_difficulty
+20.5 until 0x800F5164 0xFFFFFFFF 0x800CE134 10 Space
+22 shot 07_bronze
+22 until 0x800F5164 0xFFFFFFFF 0x800CE160 10 Right
+23.5 shot 08_silver
+23.5 until 0x800F5164 0xFFFFFFFF 0x800CE134 10 Left
+25 key Down
+26 key Space
+27.5 shot 09_players
+27.5 until 0x800F5164 0xFFFFFFFF 0x800CE108 10 Space
+29.5 shot 10_rider_select
+29.5 unchecked middle
+29.5 until 0x800C3308 0xFFFFFFFF 0x800C32B4 30 Space
+29.5 until 0x800E4098 0xFFFFFFFF 0x1 30
+31.5 shot 11_flyover
+36.5 shot 12_flyover2
+40.5 until 0x800F0710 0x80 0x0 15 Space
+42.5 shot 13_countdown
+44.5 until 0x800F0F48 0xFFFFFFFF 0x5 30 Space
+45 down Space
+50 shot 14_quarry
+55 shot 14_quarry2
+55 up Space
+55.5 until 0x800E40B0 0xFFFFFFFF 0x1 10 Enter
+57 shot 15_quarry_pause
+57 until 0x800E4108 0xFFFFFFFF 0x3 10 Down
+57.5 until 0x800E40B0 0xFFFFFFFF 0x4 10 Space
+58 until 0x800E4108 0xFFFFFFFF 0x0 10 Up
+58.5 until 0x800E4098 0xFFFFFFFF 0x6 10 Space
+58.5 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30
+58.5 checked middle
+60 shot 15_quarry_main_menu
+
+# Season: its screens to the first round's first race, its intro left by A, a stretch of racing and Quit.
+60 until 0x800F0714 0xFFFFFFFF 0x0 10 Up
+61 key Space
+62.5 shot 16_season
+62.5 unchecked middle
+62.5 until 0x800C3308 0xFFFFFFFF 0x800C32B4 60 Space
+62.5 until 0x800E4098 0xFFFFFFFF 0x1 30
+63.5 until 0x800F0710 0x80 0x0 15 Space
+65.5 shot 17_season_countdown
+65.5 until 0x800F0F48 0xFFFFFFFF 0x5 30 Space
+66 down Space
+69 shot 18_season
+72 shot 18_season2
+72 up Space
+72.5 until 0x800E40B0 0xFFFFFFFF 0x1 10 Enter
+74 shot 19_season_pause
+74 until 0x800E4108 0xFFFFFFFF 0x3 10 Down
+74.5 until 0x800E40B0 0xFFFFFFFF 0x4 10 Space
+75 until 0x800E4108 0xFFFFFFFF 0x0 10 Up
+75.5 until 0x800E4098 0xFFFFFFFF 0x6 10 Space
+75.5 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30
+75.5 checked middle
+77 shot 19_season_main_menu
+
+# Exhibition on Kyoto (the track list's cursor at 0x800F0720 kept from the last race), driven home by the computer over
+# one lap: the finish, Race Results, its menu, the replay (left by Start) and Main Menu.
+77 until 0x800F0714 0xFFFFFFFF 0x1 10 Down
+78 until 0x800F5164 0xFFFFFFFF 0x800CE134 10 Space
+79.5 until 0x800F0720 0xFFFFFFFF 0x0 10 Up
+80.5 unchecked middle
+80.5 until 0x800C3308 0xFFFFFFFF 0x800C32B4 30 Space
+80.5 until 0x800E4098 0xFFFFFFFF 0x1 30
+81.5 until 0x800F0710 0x80 0x0 15 Space
+81.5 until 0x800F0F48 0xFFFFFFFF 0x5 30 Space
+82 poke 0x800F0F68 0x00010006
+82 poke 0x800E4848 0x01000000
+90 shot 20_kyoto_computer
+90 until 0x800F5164 0xFFFFFFFF 0x800CDFA8 90 Space
+92 shot 21_race_results
+92 until 0x800F09F8 0xFFFFFFFF 0x3 10 Space
+93.5 shot 22_results_menu
+93.5 key Down
+94.5 until 0x800C3308 0xFFFFFFFF 0x800C32B4 15 Space
+94.5 unchecked black
+98.5 shot 23_replay
+104.5 shot 24_replay2
+104.5 until 0x800C3308 0xFFFFFFFF 0x800C3298 15 Enter
+104.5 checked black
+106.5 shot 25_after_replay
+106.5 key Down
+107.5 key Space
+107.5 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30 Shift
+107.5 checked middle
+109 shot 26_main_menu
+
+# Time Trials, its first track.
+109 until 0x800F0714 0xFFFFFFFF 0x2 10 Down
+110 unchecked middle
+110 until 0x800C3308 0xFFFFFFFF 0x800C32B4 10 Space
+110 until 0x800E4098 0xFFFFFFFF 0x1 30
+111 until 0x800F0710 0x80 0x0 15 Space
+113 shot 27_time_trial_countdown
+113 until 0x800F0F48 0xFFFFFFFF 0x5 30 Space
+113.5 down Space
+116.5 shot 28_time_trial
+119.5 shot 28_time_trial2
+119.5 up Space
+120 until 0x800E40B0 0xFFFFFFFF 0x1 10 Enter
+121.5 shot 29_time_trial_pause
+121.5 until 0x800E4108 0xFFFFFFFF 0x3 10 Down
+122 until 0x800E40B0 0xFFFFFFFF 0x4 10 Space
+122.5 until 0x800E4108 0xFFFFFFFF 0x0 10 Up
+123 until 0x800E4098 0xFFFFFFFF 0x6 10 Space
+123 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30
+123 checked middle
+124.5 shot 29_time_trial_main_menu
+
+# Special Tracks: the Desert, then the Stunt Course, each under way as it loads, with no intro.
+124.5 until 0x800F0714 0xFFFFFFFF 0x3 10 Down
+125.5 until 0x800F5164 0xFFFFFFFF 0x800CE0B0 10 Space
+127 shot 30_special_tracks
+127 unchecked middle
+127 until 0x800C3308 0xFFFFFFFF 0x800C32B4 60 Space
+132 shot 31_desert_start
+132 until 0x800F0F48 0xFFFFFFFF 0x5 30 Space
+132.5 down Space
+135.5 shot 32_desert
+138.5 shot 32_desert2
+138.5 up Space
+139 until 0x800E40B0 0xFFFFFFFF 0x1 10 Enter
+140.5 shot 33_desert_pause
+140.5 until 0x800E4108 0xFFFFFFFF 0x3 10 Down
+141 until 0x800E40B0 0xFFFFFFFF 0x4 10 Space
+141.5 until 0x800E4108 0xFFFFFFFF 0x0 10 Up
+142 until 0x800E4098 0xFFFFFFFF 0x6 10 Space
+142 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30
+142 checked middle
+143.5 shot 33_desert_main_menu
+143.5 until 0x800F0714 0xFFFFFFFF 0x3 10 Down
+144.5 until 0x800F5164 0xFFFFFFFF 0x800CE0B0 10 Space
+146 until 0x800F0718 0xFFFFFFFF 0x1 10 Down
+147 unchecked middle
+147 until 0x800C3308 0xFFFFFFFF 0x800C32B4 60 Space
+152 shot 34_stunt_start
+152 until 0x800F0F48 0xFFFFFFFF 0x5 30 Space
+152.5 down Space
+155.5 shot 35_stunt
+158.5 shot 35_stunt2
+158.5 up Space
+159 until 0x800E40B0 0xFFFFFFFF 0x1 10 Enter
+160.5 shot 36_stunt_pause
+160.5 until 0x800E4108 0xFFFFFFFF 0x3 10 Down
+161 until 0x800E40B0 0xFFFFFFFF 0x4 10 Space
+161.5 until 0x800E4108 0xFFFFFFFF 0x0 10 Up
+162 until 0x800E4098 0xFFFFFFFF 0x6 10 Space
+162 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30
+162 checked middle
+163.5 shot 36_stunt_main_menu
+
+# Options: Controller Settings, the Records turned a page, and the credits, a race on The Gravel Pit under them.
+163.5 until 0x800F0714 0xFFFFFFFF 0x4 10 Down
+164.5 until 0x800F5164 0xFFFFFFFF 0x800CE058 10 Space
+166 shot 37_options
+166 until 0x800F0B58 0xFFFF0000 0x30000 10 Down
+167 until 0x800F0B58 0xFFFF0000 0x40000 10 Right
+168 until 0x800F5164 0xFFFFFFFF 0x800CE268 10 Space
+169.5 shot 38_controller_settings
+169.5 until 0x800F5164 0xFFFFFFFF 0x800CE058 10 Shift
+171 until 0x800F0B58 0xFFFF0000 0x60000 10 Down
+172 until 0x800F0B58 0xFFFF0000 0x50000 10 Left
+173 until 0x800F5164 0xFFFFFFFF 0x800CE23C 10 Space
+175 shot 39_records
+175 key Right
+177 shot 40_records_page
+177 until 0x800F5164 0xFFFFFFFF 0x800CE058 10 Shift
+178.5 until 0x800F0B58 0xFFFF0000 0x60000 10 Right
+179.5 until 0x800C3308 0xFFFFFFFF 0x800C32B4 30 Space
+179.5 unchecked middle,black
+187.5 shot 41_credits
+195.5 shot 42_credits2
+196.5 until 0x800F5164 0xFFFFFFFF 0x800CE058 30 Enter
+196.5 checked middle,black
+198 shot 43_options_back
+198 key Shift
+
+# Custom Tracks: Go To Editor, its Edit menu, a straight added, turned and placed, and the track moved.
+198 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 10 Shift
+199.5 until 0x800F0714 0xFFFFFFFF 0x5 10 Down
+200.5 key Space
+202 shot 44_custom
+202 key Down
+203 until 0x800C3308 0xFFFFFFFF 0x800C32D0 15 Space
+203 unchecked hud,black
+206 shot 45_editor
+206 key Space
+207.5 shot 46_editor_edit
+207.5 key Space
+209.5 shot 47_editor_straight
+211.5 key Right
+213 key Right
+214.5 shot 48_editor_turned
+215 key Space
+217 shot 49_editor_placed
+217 key Shift
+219 shot 50_editor_back
+219 until 0x800CF4E0 0x0000FFFF 0x4 10 Down
+220 shot 51_editor_move_cursor
+220 key Space
+222 shot 52_editor_move_track
+223 down Right
+226 up Right
+226 shot 53_editor_moved
+227 key Space
+229 shot 54_editor_after_move
+238 shot 55_editor_held
+239 end

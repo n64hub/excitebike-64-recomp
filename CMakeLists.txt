@@ -85,11 +85,16 @@ set(RT64_GAME_FRAME_WORKLOADS ON)
 # build and on with Emscripten (N64Recomp-browser's docs/forks.md): no pair across a camera cut (RT64_SKIP_CAMERA_CUTS),
 # none between two places that swapped what they drew (RT64_SKIP_PLACE_SWAPS), none with a transform that collapses what
 # it draws (RT64_SKIP_COLLAPSED_MATCHES). Without them the race's frames between drew the riders and their shadows
-# partway from one place to another, 14 frames unlike both of their neighbours in a race's minute and a half
-# (N64Recomp-browser's tools/frame_check.mjs), where with them it found 5.
+# partway from one place to another, 14 frames unlike both of their neighbours in a race's minute and a half of frame
+# dumps, where with them there were 5.
 set(RT64_SKIP_CAMERA_CUTS ON)
 set(RT64_SKIP_PLACE_SWAPS ON)
 set(RT64_SKIP_COLLAPSED_MATCHES ON)
+# The race's sky is 2D strips whose texture the game scrolls as the camera turns (src/game/sky.cpp), so RT64 slides the
+# texture in the frames between (RT64_INTERPOLATE_RECT_SCROLLS, off on a desktop build and on with Emscripten), or the
+# sky stepped a game frame at a time against the track in front: in frame dumps of tools/frame_plan.txt at 16:9, 405
+# steps in one place of the horizon over four minutes of races, and none with it.
+set(RT64_INTERPOLATE_RECT_SCROLLS ON)
 # What lies past the framebuffer's sides counts only to them when RT64 judges what covers a frame's whole width
 # (RT64_SCISSOR_INSIDE_FRAMEBUFFER, off on a desktop build and on with Emscripten): the main menu's sponsor logo draws
 # under a scissor as wide as the window (src/game/menu_logo.cpp), and without it the menu's frame and items were drawn
@@ -231,8 +236,11 @@ target_sources(Excitebike64Recompiled PRIVATE
     ${CMAKE_SOURCE_DIR}/src/game/rumble_pak.cpp
     ${CMAKE_SOURCE_DIR}/src/game/widescreen.cpp
     ${CMAKE_SOURCE_DIR}/src/game/hud.cpp
+    ${CMAKE_SOURCE_DIR}/src/game/editor.cpp
     ${CMAKE_SOURCE_DIR}/src/game/menu_logo.cpp
     ${CMAKE_SOURCE_DIR}/src/game/sky.cpp
+    ${CMAKE_SOURCE_DIR}/src/game/wipe.cpp
+    ${CMAKE_SOURCE_DIR}/src/game/splash.cpp
 )
 if (EB_PATCHES)
     target_sources(Excitebike64Recompiled PRIVATE ${CMAKE_SOURCE_DIR}/src/main/register_patches.cpp)

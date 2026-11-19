@@ -1,0 +1,93 @@
+# The soak play (a play of the Linux build through each mode once, failing on a crash, an exit or a picture that
+# stands still 10 s), 3 minutes with the boot: a race of each mode with random steering, tucks and tricks, and the
+# track editor. Each until checks the mode was reached: the screen word 0x800F5164 (the main menu 0x800CE0DC, Special
+# Tracks' list 0x800CE0B0) and the game state 0x800C3308 (a race 0x800C32B4). The main menu keeps its cursor on the
+# mode last played, so each mode is one Down from the one before; a key waits 1.5 s after the menu's screen word, since
+# the menu fades in under it and a key in the fade is lost. A race is left by START, Down to Quit, A, Up to Really
+# Quit, A, back to the main menu.
+# Season: Start on Season, A through its screens into its first race.
+0 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 90 Enter
+1.5 key Enter
+2 until 0x800C3308 0xFFFFFFFF 0x800C32B4 60 Space
+3 key Space
+5 key Space
+7 down Space
+7.5 shot season
+8 random Left,Right,Up,Down,G,T,F,H,Space
+20 random off
+20.5 up Space
+21 key Enter
+22.5 key Down
+23.5 key Space
+24.5 key Up
+25.5 key Space
+26 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30 Shift
+# Exhibition Race on Mountain Quarry.
+27.5 shot menu1
+28 key Down
+29 key Space
+31 key Space
+33.5 key Down
+35.5 key Space
+36 until 0x800C3308 0xFFFFFFFF 0x800C32B4 60 Space
+37 key Space
+39 key Space
+41 down Space
+41.5 shot exhibition
+42 random Left,Right,Up,Down,G,T,F,H,Space
+54 random off
+54.5 up Space
+55 key Enter
+56.5 key Down
+57.5 key Space
+58.5 key Up
+59.5 key Space
+60 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30 Shift
+# Time Trials, its first track.
+61.5 key Down
+62.5 key Space
+63 until 0x800C3308 0xFFFFFFFF 0x800C32B4 60 Space
+64 key Space
+66 key Space
+68 down Space
+68.5 shot time_trials
+69 random Left,Right,Up,Down,G,T,F,H,Space
+81 random off
+81.5 up Space
+82 key Enter
+83.5 key Down
+84.5 key Space
+85.5 key Up
+86.5 key Space
+87 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30 Shift
+# Special Tracks, the Desert.
+88.5 key Down
+89.5 key Space
+90 until 0x800F5164 0xFFFFFFFF 0x800CE0B0 10
+91.5 shot special
+92 key Space
+92.5 until 0x800C3308 0xFFFFFFFF 0x800C32B4 60 Space
+93.5 key Space
+95.5 key Space
+97.5 down Space
+98.0 shot desert
+98.5 random Left,Right,Up,Down,G,T,F,H,Space
+110.5 random off
+111.0 up Space
+111.5 key Enter
+113.0 key Down
+114.0 key Space
+115.0 key Up
+116.0 key Space
+116.5 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30 Shift
+# Custom Tracks, Go To Editor, and random input in the editor to the end.
+118 key Down
+118.5 key Down
+119.5 key Space
+121 key Down
+122 key Space
+125 shot editor
+125.5 random Up,Down,Left,Right,Space,Shift,W,A,S,D
+150 random off
+150.5 shot end
+151 end

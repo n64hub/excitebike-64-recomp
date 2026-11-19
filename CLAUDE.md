@@ -20,8 +20,9 @@ This repo is the game: its recompilation, the patches over it, the desktop build
   loader (`src/game/boot.cpp`), the settings (`src/game/config.cpp`), libultra functions the runtime leaves out
   (`src/game/libultra.cpp`) and the Rumble Pak's answer to the game's probe (`src/game/rumble_pak.cpp`), the race's
   widescreen culling, HUD and sky (`src/game/widescreen.cpp`, `src/game/hud.cpp`, `src/game/sky.cpp`), the main
-  menu's sponsor logo across a wide window (`src/game/menu_logo.cpp`), and a stack trace on a crash, on Windows and
-  Linux (`src/main/crash_trace.cpp`).
+  menu's sponsor logo across a wide window (`src/game/menu_logo.cpp`), the fades across it too (`src/game/wipe.cpp`),
+  the boot's logos and notices kept at 4:3 in it (`src/game/splash.cpp`), the track editor out to its edges
+  (`src/game/editor.cpp`), and a stack trace on a crash, on Windows and Linux (`src/main/crash_trace.cpp`).
 - `lib/`: `excitebike64` (the decomp, for `syms/` and the patches' headers), `ultralib` (the libultra the decomp builds
   against, for its headers), upstream `rt64`, `N64ModernRuntime` and `RecompFrontend` at the commits
   N64Recomp-browser's web forks are built on, and `N64Recomp-browser` at a release tag. The web support every recomp's
@@ -64,7 +65,8 @@ This repo is the game: its recompilation, the patches over it, the desktop build
   (exceptasm.o), which the decomp's function table splits elsewhere, is listed by libultra's names so N64Recomp leaves
   it out (`tools/gen_syms.py`).
 - **Microcodes.** Graphics: F3DLX2.Rej and F3DEX2.NoN xbus 2.08. The game reads rspboot from the cartridge's IPL3 (ROM
-  0xB70). Sound: none; the game mixes on the CPU and gives libultra's audio interface its buffers.
+  0xB70). Sound: none; the game mixes on the CPU and gives libultra's audio interface its buffers, paced by its FIFO
+  full, which the runtime never sets: `main.cpp`'s `eb_ai_status` sets it for the game's two sound loops.
 - **Saves.** The cartridge's 16 Kbit EEPROM: `main.cpp` declares `SaveType::Eep16k`. The Controller Pak (time-trial
   ghosts, user tracks) is the runtime's, which answers that none is plugged in.
 - **Threads** (`main.cpp` names them): 0 libultra's PI and VI managers, 1 the idle thread and the scheduler (by

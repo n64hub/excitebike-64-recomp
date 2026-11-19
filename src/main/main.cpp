@@ -11,6 +11,7 @@
 #include <cinttypes>
 #include <filesystem>
 #include <chrono>
+#include <atomic>
 
 #ifndef __EMSCRIPTEN__
 #include "nfd.h" // a browser has no native file dialogs; RecompFrontend asks the page instead
@@ -179,6 +180,22 @@ static uint32_t output_channels = 2;
 // and the frames they turn into are dropped again.
 constexpr uint32_t duplicated_input_frames = 4;
 static uint32_t discarded_output_frames;
+// The last buffer queued, in the device's frames (eb_ai_status).
+static std::atomic<uint64_t> last_buffer_output_frames{0};
+
+// How much sound eb_ai_status keeps queued past the last buffer, and from how much queue_samples' catch-up drops
+// samples. The game mixes once a game frame (snd_service), so the queue has to outlast its longest frame. On the
+// desktop that is two retraces, the slack get_frames_remaining allows, under a catch-up from 100 ms. A page's frames
+// stall for longer where the browser's thread is busy (in Chrome at twice the canvas's size on a busy host, 1821 frame
+// gaps over 50 ms in four minutes and the longest 218 ms), and with the desktop's slack its sound ran short through
+// them, so a page keeps 200 ms, as it did when the game made too much, and catches up from 300 ms.
+#ifdef __EMSCRIPTEN__
+constexpr uint32_t queue_slack_ms = 200;
+constexpr uint64_t catch_up_from_us = 300000;
+#else
+constexpr uint32_t queue_slack_ms = 33;
+constexpr uint64_t catch_up_from_us = 100000;
+#endif
 
 constexpr uint32_t bytes_per_frame = input_channels * sizeof(float);
 
@@ -241,9 +258,10 @@ void queue_samples(int16_t* audio_data, size_t sample_count) {
     uint32_t num_bytes_to_queue = audio_convert.len_cvt - output_channels * discarded_output_frames * sizeof(swap_buffer[0]);
     float* samples_to_queue = swap_buffer.data() + output_channels * discarded_output_frames / 2;
 
-    // With more than 100 ms queued (the window was dragged, a slow boot), drop samples to catch up, whole frames only:
-    // SDL's queue is a byte stream, so a part of one would put every sample queued after it out of step, read as noise.
-    uint32_t skip_factor = cur_queued_microseconds / 100000;
+    // With more than catch_up_from_us queued (the window was dragged, a slow boot), drop samples to catch up, whole
+    // frames only: SDL's queue is a byte stream, so a part of one would put every sample queued after it out of step,
+    // read as noise.
+    uint32_t skip_factor = cur_queued_microseconds / catch_up_from_us;
     if (skip_factor != 0) {
         uint32_t skip_ratio = 1 << skip_factor;
         uint32_t output_frame_bytes = output_channels * sizeof(swap_buffer[0]);
@@ -255,6 +273,22 @@ void queue_samples(int16_t* audio_data, size_t sample_count) {
     }
 
     queue_audio(samples_to_queue, num_bytes_to_queue);
+    last_buffer_output_frames = uint64_t(sample_count / input_channels) * output_sample_rate / sample_rate;
+}
+
+// The audio interface's FIFO full (osAiGetStatus's AI_STATUS_FIFO_FULL, bit 31) as the game's sound reads it. Both of
+// its sound loops, the races' and menus' (n64snd_update) and the NES games' (nes_audio_update), mix and queue another
+// buffer whenever the bit is clear, and leave their pace to it: on a console the FIFO holds two buffers, the one
+// playing and the next, so they make what plays. The runtime's FIFO is never full, so they made several times what
+// plays, the queue stayed at 300 ms and queue_samples' catch-up above thinned every buffer to a quarter. us.toml hooks
+// the status each reads: full while more than the last buffer queued is still queued, with queue_slack_ms more, so on
+// the desktop a buffer goes on with 33-74 ms queued in a race and nothing is dropped.
+extern "C" void eb_ai_status(uint8_t* rdram, recomp_context* ctx) {
+    const uint64_t queued = get_queued_audio_bytes() / (output_channels * sizeof(float));
+    const uint64_t slack = uint64_t(queue_slack_ms) * output_sample_rate / 1000;
+    if (last_buffer_output_frames != 0 && queued >= last_buffer_output_frames + slack) {
+        ctx->r2 = (gpr)(int32_t)(uint32_t(ctx->r2) | 0x80000000u);
+    }
 }
 
 // What osAiGetLength reads: the frames queued, less two retraces' worth, so that the game makes enough to cover a late
