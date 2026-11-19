@@ -236,6 +236,7 @@ target_sources(Excitebike64Recompiled PRIVATE
     ${CMAKE_SOURCE_DIR}/src/game/rumble_pak.cpp
     ${CMAKE_SOURCE_DIR}/src/game/widescreen.cpp
     ${CMAKE_SOURCE_DIR}/src/game/hud.cpp
+    ${CMAKE_SOURCE_DIR}/src/game/editor.cpp
     ${CMAKE_SOURCE_DIR}/src/game/menu_logo.cpp
     ${CMAKE_SOURCE_DIR}/src/game/sky.cpp
     ${CMAKE_SOURCE_DIR}/src/game/wipe.cpp

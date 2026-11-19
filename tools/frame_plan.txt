@@ -22,6 +22,9 @@
 # (its pause menu, results and replay over it), is left out of the middle (`unchecked middle` to `checked middle`),
 # the credits' race too. And the title is left out of where the HUD sits (`unchecked hud`): its logo stays in the
 # middle at 4:3 in every window over its attract race, which widens, as a HUD left at 4:3 would.
+# The track editor is left out of it too: its menu panel moves out to the window's left, but the 3D view beside it
+# holds still between the camera's moves, so the check finds pixels fixed all along the way the panel goes (98% at
+# its 4:3 place at 16:9, with no place out from it of its own) and reads it as a HUD left at 4:3.
 # Two steps go past what keys can do in a few seconds. A race's end: the computer drives the player's bike home over
 # one lap, the word at 0x800E4848 written as 0x01000000 (gRiders[0].isCpu, which the game sets itself as a player
 # finishes, and the three bytes after it cleared) and the event's laps, the high half of 0x800F0F68, as 1 beside its 6
@@ -229,13 +232,14 @@
 209 shot 43_options_back
 209 key Shift
 
-# Custom Tracks: Go To Editor, its Edit menu and a straight added.
+# Custom Tracks: Go To Editor, its Edit menu, a straight added, turned and placed, and the track moved.
 209 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 10 Shift
 210.5 until 0x800F0714 0xFFFFFFFF 0x5 10 Down
 211.5 key Space
 213 shot 44_custom
 213 key Down
 214 until 0x800C3308 0xFFFFFFFF 0x800C32D0 15 Space
+214 unchecked hud
 217 shot 45_editor
 217 key Space
 218.5 shot 46_editor_edit
@@ -244,4 +248,21 @@
 222.5 key Right
 224 key Right
 225.5 shot 48_editor_turned
-226.5 end
+226 key Space
+228 shot 49_editor_placed
+228 key Shift
+230 shot 50_editor_back
+230 key Down
+231 key Down
+232 key Down
+233 key Down
+234 shot 51_editor_move_cursor
+234 key Space
+236 shot 52_editor_move_track
+237 down Right
+240 up Right
+240 shot 53_editor_moved
+241 key Space
+243 shot 54_editor_after_move
+252 shot 55_editor_held
+253 end
