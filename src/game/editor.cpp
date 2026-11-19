@@ -1,35 +1,48 @@
 // The track editor out to the window's edges (RT64's Aspect Ratio Expand). The game draws it inside a border of its
-// 512x240 screen, 26 pixels at the left and the right and 16 at the top (sEditViewRects: the screen 26, 16, 460x209;
-// its menu panel at the left, out to 162; the 3D track view 162 to 484, with a bar above and below it), so even a 4:3
-// window showed black down both sides, and a wider one the whole editor in the middle.
+// 512x240 screen, 26 pixels at the left and the right, 16 at the top and 15 at the bottom (sEditViewRects: the screen
+// 26, 16, 460x209; its menu panel at the left, out to 162; the 3D track view 162 to 484, with a bar above and below
+// it), so even a 4:3 window showed black round it, and a wider one the whole editor in the middle.
 //
-// So the panel is drawn from the window's left edge and the track view out to its right edge, in every window, 4:3
-// too. As src/game/hud.cpp does for the race's HUD, us.toml hooks edit_draw at its entry (the list's end, *pgdl) and
-// before it returns (the list's end again), and the commands it added are put back with RT64's alignments between them:
+// So the panel is drawn from the window's left edge and the track view out to its right edge and its top and bottom,
+// in every window, 4:3 too. As src/game/hud.cpp does for the race's HUD, us.toml hooks edit_draw at its entry (the
+// list's end, *pgdl) and before it returns (the list's end again), and the commands it added are put back with RT64's
+// alignments between them:
 // - what lies left of the track view (the panel's fill, its buttons and their text) moved left by the screen's border
 //   and placed from the window's left (gEXSetRectAlign);
-// - the track view's own fill and the first piece of each bar from the panel's edge to the window's right edge, the
-//   bar's texture stretched with it (its pattern runs only up and down; the game's other pieces stay over it);
+// - the track view's own fill from the panel's edge to the window's right edge and from its top to its bottom, and the
+//   first piece of each bar from the panel's edge to the window's right edge, the bar's texture stretched with it (its
+//   pattern runs only up and down; the game's other pieces stay over it);
 // - the screen's scissor from the window's left edge to its right, and the track view's from the panel's edge to the
-//   window's right (gEXSetScissor);
-// - the track view's viewport replaced by one far wider than the screen (VIEWPORT_HALF either side of its middle), its
-//   projection narrowed by as much and moved by where the game's viewport was, so the picture lands where the game
-//   draws it and goes on past it: RT64 widens a 3D view to the window only when it spans the whole width the frame's
-//   scissors do, which the track view beside the panel never does, and places one that doesn't at the 4:3 frame's
-//   scale, which past the frame shows what the wider viewport has there.
-// What lies over the track view (its name, the piece's, the warnings, name entry) stays where the game draws it: the
-// track view's middle is where it was in every window, since it widens by as much on both sides.
+//   window's right, both from the screen's top to its bottom (gEXSetScissor);
+// - the track view's viewport replaced by one far wider than the screen (VIEWPORT_HALF either side of its middle) and
+//   as tall as it, its projection narrowed and shortened by as much and moved by where the game's viewport was, so the
+//   picture lands where the game draws it and goes on past it: RT64 widens a 3D view to the window only when it spans
+//   the whole width the frame's scissors do, which the track view beside the panel never does, and places one that
+//   doesn't at the 4:3 frame's scale, which past the frame shows what the wider viewport has there.
+// - the bars above and below the track view, with what is written on them (the track's name, the piece's), moved up
+//   to the screen's top edge and down to its bottom one; and the panel's fill from the top to the bottom, its rows (the
+//   title, then one per item, each a picture of the same height with its text) each moved whole, spread evenly from
+//   the top to the bottom, where the panel spans the screen (gEXSetRectAlign's top and bottom offsets). Seen from
+//   above (Move Track) the space round the track is black, so a bar left where the game draws it had black above and
+//   below it across the window, as the console's border did.
+// What lies over the track view (the warnings, name entry) stays where the game draws it: the track view's middle is
+// where it was in every window, since it widens by as much on both sides and grows by as much up and down.
+// RT64 places what is aligned to the window's sides at its HUD's ratio, 16:9 unless a player sets another
+// (extAspectTarget), so in a window wider than that the editor stops at 16:9's sides, as the race's HUD does.
 //
 // When the panel slides out (slideOffset, up to MAX_SLIDE), the track view's left edge goes from the panel's edge to
 // the window's, as the game's goes from the panel's to the border. The commands go to buffers of this file's past
 // src/game/splash.cpp's (0x80C58000, four of 0x2000), eight in turn as hud.cpp's, each with room at its end for the
 // viewports and projections written in it; a list longer than a buffer is left as the game drew it.
 
+#include <cmath>
 #include <cstdint>
 #include <cstring>
 
 #define F3DEX_GBI_2
 #include "rt64_extended_gbi.h"
+
+#include "eb.h"
 
 namespace {
 
@@ -41,8 +54,14 @@ constexpr uint32_t G_MTX_PUSH = 1, G_MTX_LOAD = 2, G_MTX_PROJECTION = 4;
 
 // The game's data this reads (USA Rev 1).
 constexpr uint32_t EB_SCREEN_WIDTH = 0x800F1D8C;      // gScreenWidth
+constexpr uint32_t EB_SCREEN_HEIGHT = 0x800F1D90;     // gScreenHeight
 constexpr uint32_t EB_EDIT_VIEW_RECTS = 0x800CF300;   // sEditViewRects: x, y, w, h (words) for the screen, the track view, ...
 constexpr uint32_t EB_EDIT_VIEW_BASE = 0x800CF340;    // sEditViewRectsBase: the same with the panel in
+constexpr uint32_t EB_GUI = 0x800CEB40;               // gGui: its images (+4), a GuiImgSet: count, palette, then Img[]
+constexpr uint32_t GUI_IMG_MENU_ITEM_H = 8 + 2 * 8 + 1; // imgs[2], a menu row's picture: its height (Img's second byte)
+constexpr uint32_t GUI_IMG_BAR_H = 0x58 + 1;           // the track view's bar (edit_draw's gGui->images + 0x58): its height
+constexpr int MENU_Y = 0x11;                          // gui_draw_menu's y for the panel: its title's row, then one per item
+constexpr int BAR_TOP_Y = 0x11, BAR_BOTTOM_Y = 0xCD;  // the bars' y above and below the track view
 constexpr uint32_t VIEW_SCREEN = 0, VIEW_TRACK = 1;
 constexpr int MAX_SLIDE = 120;                        // 30 frames, 4 pixels each
 constexpr int VIEWPORT_HALF = 1024;                   // the track view's viewport's half width: past a 32:9 window's sides
@@ -128,9 +147,10 @@ void mtx_set(uint32_t m, int i, int j, int32_t v) {
 // The alignment rectangles are drawn with, as gEXSetRectAlign takes it.
 struct Align {
     uint32_t lorigin = G_EX_ORIGIN_NONE, rorigin = G_EX_ORIGIN_NONE;
-    int ulx = 0, lrx = 0;
+    int ulx = 0, uly = 0, lrx = 0, lry = 0;
     bool operator!=(const Align& o) const {
-        return lorigin != o.lorigin || rorigin != o.rorigin || ulx != o.ulx || lrx != o.lrx;
+        return lorigin != o.lorigin || rorigin != o.rorigin || ulx != o.ulx || uly != o.uly || lrx != o.lrx ||
+               lry != o.lry;
     }
 };
 
@@ -140,10 +160,11 @@ void rewrite(uint32_t start, uint32_t end) {
         return;
     }
     const int width = int(rd_w(EB_SCREEN_WIDTH));
+    const int height = int(rd_w(EB_SCREEN_HEIGHT));
     const Rect screen = read_rect(EB_EDIT_VIEW_RECTS, VIEW_SCREEN);
     const Rect track = read_rect(EB_EDIT_VIEW_RECTS, VIEW_TRACK);
     const Rect base = read_rect(EB_EDIT_VIEW_BASE, VIEW_TRACK);
-    if (width < 320 || screen.x <= 0 || screen.x >= width / 4 || track.w <= 0 || base.x <= screen.x) {
+    if (width < 320 || height < 200 || screen.y + screen.h > height || screen.x <= 0 || screen.x >= width / 4 || track.w <= 0 || base.x <= screen.x) {
         return;
     }
     // The panel moves left by the screen's border, and the track view's left edge with it, out to the window's as
@@ -152,7 +173,46 @@ void rewrite(uint32_t start, uint32_t end) {
     int slide = base.x - track.x;
     slide = slide < 0 ? 0 : (slide > MAX_SLIDE ? MAX_SLIDE : slide);
     const int track_left = (base.x - shift) * (MAX_SLIDE - slide) / MAX_SLIDE;
+    // The window's sides, in the screen's pixels past its own (0 in a 4:3 window or with Aspect Ratio Original). Placed
+    // by these and not by RT64's left and right origins, which stop at HUD Placement's sides (16:9 by default), so
+    // the editor reaches a window wider than that too, as the menus' backdrop does.
+    const float edge = float(width) * (eb::window_wide() - 1.0f) * 0.5f;
+    const int edge_q = int(std::lround(edge * 4.0f));
+    const int margin = int(std::ceil(edge));
     const int track_right = track.x + track.w - 1;
+
+    // Up and down: the bars, with what is written on them, to the screen's top and bottom edges, and the panel's
+    // rows, each whole, spread from its top to its bottom where the panel spans the screen (a shorter menu's stay).
+    const uint32_t gui = resolve(rd_w(EB_GUI));
+    const uint32_t images = gui != 0 ? resolve(rd_w(gui + 4)) : 0;
+    const int row_h = images != 0 ? int(rd_w(images + (GUI_IMG_MENU_ITEM_H & ~3u)) >> (8 * (3 - (GUI_IMG_MENU_ITEM_H & 3))) & 0xFF) : 0;
+    const int bar_h = images != 0 ? int(rd_w(images + (GUI_IMG_BAR_H & ~3u)) >> (8 * (3 - (GUI_IMG_BAR_H & 3))) & 0xFF) : 0;
+    if (row_h < 8 || row_h > 40 || bar_h < 4 || bar_h > 32) {
+        return;
+    }
+    const int bar_top_shift = -BAR_TOP_Y * 4;
+    const int bar_bottom_shift = (height - (BAR_BOTTOM_Y + bar_h)) * 4;
+    int rows = 0;
+    for (uint32_t i = 0; i < count; i++) {
+        const uint32_t w0 = rd_w(start + i * 8), w1 = rd_w(start + i * 8 + 4);
+        const uint32_t op = w0 >> 24;
+        if (op == G_TEXRECT || op == G_FILLRECT) {
+            const int uly = int(w1 & 0xFFF) / 4, lrx = int((w0 >> 12) & 0xFFF) / 4;
+            if (lrx <= track.x + 1 && uly >= MENU_Y && (uly - MENU_Y) / row_h + 1 > rows) {
+                rows = (uly - MENU_Y) / row_h + 1;
+            }
+        }
+    }
+    const bool spread = rows > 1 && MENU_Y + rows * row_h >= screen.y + screen.h - 2;
+    // A panel row's move, in quarter pixels: row r's top from MENU_Y + r * row_h to r * (height - row_h) / (rows - 1).
+    auto row_shift = [&](int uly) {
+        if (!spread || uly < MENU_Y) {
+            return 0;
+        }
+        int r = (uly - MENU_Y) / row_h;
+        r = r >= rows ? rows - 1 : r;
+        return (r * (height - row_h) * 4) / (rows - 1) - (MENU_Y + r * row_h) * 4;
+    };
 
     const uint32_t buffer = BUFFER_BASE + BUFFER_SIZE * g_next_buffer;
     g_next_buffer = (g_next_buffer + 1) % BUFFER_COUNT;
@@ -165,11 +225,16 @@ void rewrite(uint32_t start, uint32_t end) {
     out.put(c, 1);
     gEXPushScissor(c);
     out.put(c, 1);
+    // Every rectangle where it is placed: a rectangle as wide as the frame's scissor (the framebuffer's width, with
+    // RT64_SCISSOR_INSIDE_FRAMEBUFFER) RT64 otherwise stretches across the window, and the track view's fill and bars,
+    // which reach the window's right edge, covered the panel in a window wider than 16:9.
+    gEXSetRectAspect(c, G_EX_ASPECT_ADJUST);
+    out.put(c, 1);
 
-    // The track view's viewport while one is in effect (its middle and half width, in pixels), and the projection
-    // loaded last.
+    // The track view's viewport while one is in effect (its middle and half width, and half height, in pixels), and
+    // the projection loaded last.
     bool track_vp = false;
-    float vp_mid = 0.0f, vp_half = 1.0f;
+    float vp_mid = 0.0f, vp_half = 1.0f, vp_mid_y = 0.0f, vp_half_y = 1.0f;
     uint32_t proj_w0 = 0, proj_w1 = 0;
     bool proj_narrowed = false;
     auto narrowed_projection = [&]() {
@@ -179,17 +244,21 @@ void rewrite(uint32_t start, uint32_t end) {
             proj_narrowed = false;
             return;
         }
-        // x' = (mid - width/2 + half * x) / VIEWPORT_HALF, in the clip space: x's column scaled, plus w's.
+        // x' = (mid - width/2 + half * x) / VIEWPORT_HALF, in the clip space: x's column scaled, plus w's; and y the
+        // same way over the screen's height, y up (the screen's row is mid - half * y).
         const double a = double(vp_half) / VIEWPORT_HALF;
         const double b = double(vp_mid - width * 0.5f) / VIEWPORT_HALF;
+        const double ay = double(vp_half_y) / (height * 0.5);
+        const double by = double(height * 0.5f - vp_mid_y) / (height * 0.5);
         uint32_t dst = data;
         data += 64;
         for (int k = 0; k < 64; k += 4) {
             wr_w(dst + k, rd_w(src + k));
         }
         for (int i = 0; i < 4; i++) {
-            double x = mtx_get(src, i, 0), w = mtx_get(src, i, 3);
+            double x = mtx_get(src, i, 0), y = mtx_get(src, i, 1), w = mtx_get(src, i, 3);
             mtx_set(dst, i, 0, int32_t(a * x + b * w));
+            mtx_set(dst, i, 1, int32_t(ay * y + by * w));
         }
         out.put(proj_w0, dst & 0x1FFFFFFF);
         proj_narrowed = true;
@@ -209,11 +278,12 @@ void rewrite(uint32_t start, uint32_t end) {
             last_scissor_w[1] = w1;
             last_scissor = last_scissor_w;
             if (ulx == screen.x && lrx >= screen.x + screen.w - 1) {
-                gEXSetScissor(c, mode, G_EX_ORIGIN_LEFT, G_EX_ORIGIN_RIGHT, 0, uly, 0, lry);
+                gEXSetScissor(c, mode, G_EX_ORIGIN_NONE, G_EX_ORIGIN_NONE, -margin, 0, width + margin, height);
                 out.put(c, 2);
             }
             else if (ulx == track.x && lrx >= track_right) {
-                gEXSetScissor(c, mode, G_EX_ORIGIN_LEFT, G_EX_ORIGIN_RIGHT, track_left, uly, 0, lry);
+                gEXSetScissor(c, mode, G_EX_ORIGIN_NONE, G_EX_ORIGIN_NONE, track_left - int(std::floor(edge)), 0,
+                              width + margin, height);
                 out.put(c, 2);
             }
             else {
@@ -224,10 +294,13 @@ void rewrite(uint32_t start, uint32_t end) {
         if (op == G_MOVEMEM && (w0 & 0xFF) == G_MV_VIEWPORT && resolve(w1) != 0) {
             const uint32_t vp = resolve(w1);
             const float half = rd_h(vp + 0) / 4.0f, mid = rd_h(vp + 8) / 4.0f;
+            const float half_y = rd_h(vp + 2) / 4.0f, mid_y = rd_h(vp + 10) / 4.0f;
             const bool is_track = mid + half >= track_right - 2 && mid - half >= track.x - 2 && half > 0.0f;
-            if (is_track && data + 16 <= data_end) {
+            if (is_track && half_y > 0.0f && data + 16 <= data_end) {
                 vp_mid = mid;
                 vp_half = half;
+                vp_mid_y = mid_y;
+                vp_half_y = half_y;
                 uint32_t dst = data;
                 data += 16;
                 for (int k = 0; k < 16; k += 4) {
@@ -235,6 +308,8 @@ void rewrite(uint32_t start, uint32_t end) {
                 }
                 wr_h(dst + 0, int16_t(VIEWPORT_HALF * 4));
                 wr_h(dst + 8, int16_t(width * 2));
+                wr_h(dst + 2, int16_t(height * 2));
+                wr_h(dst + 10, int16_t(height * 2));
                 out.put(w0, dst & 0x1FFFFFFF);
                 track_vp = true;
                 if (proj_w0 != 0) {
@@ -269,23 +344,41 @@ void rewrite(uint32_t start, uint32_t end) {
         }
         if (op == G_TEXRECT || op == G_FILLRECT) {
             const int ulx = int((w1 >> 12) & 0xFFF) / 4, uly = int(w1 & 0xFFF) / 4;
-            const int lrx_q = int((w0 >> 12) & 0xFFF), lrx = lrx_q / 4;
+            const int lrx_q = int((w0 >> 12) & 0xFFF), lrx = lrx_q / 4, lry_q = int(w0 & 0xFFF);
             Align want;
             if (lrx <= track.x + 1) {
-                // The panel.
-                want.lorigin = want.rorigin = G_EX_ORIGIN_LEFT;
-                want.ulx = want.lrx = -shift * 4;
+                // The panel: its fill from the screen's top to its bottom, each row moved whole.
+                want.ulx = want.lrx = -shift * 4 - edge_q;
+                if (op == G_FILLRECT && uly <= screen.y && spread) {
+                    want.uly = -uly * 4;
+                    want.lry = (height - 1) * 4 - lry_q;
+                }
+                else {
+                    want.uly = want.lry = row_shift(uly);
+                }
             }
             else if (ulx == track.x && (op == G_FILLRECT ? (uly == track.y && lrx >= track_right - 1)
                                                          : (uly < track.y + 12 || uly >= track.y + track.h - 24))) {
-                // The track view's fill, or a bar's first piece: out to the window's right edge.
-                want.lorigin = G_EX_ORIGIN_LEFT;
-                want.rorigin = G_EX_ORIGIN_RIGHT;
-                want.ulx = (track_left - track.x) * 4;
-                want.lrx = -lrx_q;
+                // The track view's fill, or a bar's first piece: out to the window's right edge, and the fill out to
+                // its top and bottom too.
+                want.ulx = (track_left - track.x) * 4 - edge_q;
+                want.lrx = width * 4 + edge_q - lrx_q;
+                if (op == G_FILLRECT) {
+                    want.uly = -track.y * 4;
+                    want.lry = (height - (track.y + track.h)) * 4;
+                }
+            }
+            if (op == G_TEXRECT && ulx >= track.x - 1) {
+                // A bar, or what is written on it: to the screen's edge.
+                if (uly >= BAR_TOP_Y && uly < BAR_TOP_Y + bar_h) {
+                    want.uly = want.lry = bar_top_shift;
+                }
+                else if (uly >= BAR_BOTTOM_Y && uly < BAR_BOTTOM_Y + bar_h) {
+                    want.uly = want.lry = bar_bottom_shift;
+                }
             }
             if (want != align) {
-                gEXSetRectAlign(c, want.lorigin, want.rorigin, want.ulx, 0, want.lrx, 0);
+                gEXSetRectAlign(c, want.lorigin, want.rorigin, want.ulx, want.uly, want.lrx, want.lry);
                 out.put(c, 2);
                 align = want;
             }
@@ -295,6 +388,8 @@ void rewrite(uint32_t start, uint32_t end) {
 
     gEXSetRectAlign(c, G_EX_ORIGIN_NONE, G_EX_ORIGIN_NONE, 0, 0, 0, 0);
     out.put(c, 2);
+    gEXSetRectAspect(c, G_EX_ASPECT_AUTO);
+    out.put(c, 1);
     gEXPopScissor(c);
     out.put(c, 1);
     if (last_scissor != nullptr) {

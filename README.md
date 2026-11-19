@@ -21,8 +21,10 @@ the cartridge's EEPROM across a restart. On a window wider than 4:3, one player'
 other reach the window's edges, sky and all, the HUD at its sides, and so does the track editor, its menu at the
 window's left (at 4:3 too, without the console's border); side by side, three or four players and the menus stay 4:3 in
 the middle, the menus' backdrop and its sponsor logo reaching the edges, and every fade to black covers the whole
-window. Not played yet: saving a custom track and racing it (the editor opens, lays track and moves it), and time
-trials' ghosts, which the game keeps on a Controller Pak that the runtime says isn't there.
+window. In every window, 4:3 included, each race view fills its part of the screen from top to bottom, without the
+black border the console drew round it (which a TV's edge hid), the HUD where the game puts it. Not played yet: saving
+a custom track and racing it (the editor opens, lays track and moves it), and time trials' ghosts, which the game
+keeps on a Controller Pak that the runtime says isn't there.
 
 It plays in a browser too, at [n64hub.com/excitebike-64](https://n64hub.com/excitebike-64/) (`docs/web.md`), and the
 desktop builds for Windows and Linux are on the [Releases](https://github.com/n64hub/excitebike-64-recomp/releases)

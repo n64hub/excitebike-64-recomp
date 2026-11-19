@@ -13,18 +13,27 @@
 # state is the word at 0x800C3308: 0x800C32B4 a race, 0x800C3298 the menus. gGame is at 0x800F0710: its main menu
 # cursor at +4 (0x800F0714, the modes from 0 in the menu's order), Options' cursor in the high half of +0x448
 # (0x800F0B58). The pause menu is the word at 0x800E40B0 (1 its items, 4 Really Quit or Just Kidding), its cursor at
-# 0x800E4108 (3 Quit, then 0 Really Quit), and a race's phase at 0x800E4098 is 6 once a quit is taken and it fades
-# out. A menu fades in under its screen word and drops a key in the fade, so each step whose miss would leave
-# the plan out of step presses until RAM shows it took. A race is held to the throttle from the moment it is under
+# 0x800E4108 (3 Quit, then 0 Really Quit), and a race's phase at 0x800E4098 is 1 once its track's intro takes A and 6
+# once a quit is taken and it fades out; gGame's flags (0x800F0710) keep 0x80 set until the intro is over. A menu fades
+# in under its screen word and drops a key in the fade, and an intro its first frames, so each step whose miss would
+# leave the plan out of step presses until RAM shows it took. A race is held to the throttle from the moment it is under
 # way (the event's state at 0x800F0F48 is 5), with no steering, yet the three runs still race apart within seconds:
 # bike_update steps each rider by the retraces the last frame took, which differ with each window's drawing, so a
 # race's middle at 16:9 or 32:9 matches no frame of the 4:3 run's race. So each race, from there to the menu after it
 # (its pause menu, results and replay over it), is left out of the middle (`unchecked middle` to `checked middle`),
-# the credits' race too. And the title is left out of where the HUD sits (`unchecked hud`): its logo stays in the
-# middle at 4:3 in every window over its attract race, which widens, as a HUD left at 4:3 would.
+# the credits' race too, and the first race from its track's intro, which follows a rider round the course the same
+# way: it rides apart within seconds too (a 16:9 view 1.6 s in a row where the 4:3 run never was). And the title is
+# left out of where the HUD sits (`unchecked hud`): its logo stays in the middle at 4:3 in every window over its
+# attract race, which widens, as a HUD left at 4:3 would.
 # The track editor is left out of it too: its menu panel moves out to the window's left, but the 3D view beside it
 # holds still between the camera's moves, so the check finds pixels fixed all along the way the panel goes (98% at
-# its 4:3 place at 16:9, with no place out from it of its own) and reads it as a HUD left at 4:3.
+# its 4:3 place at 16:9, with no place out from it of its own) and reads it as a HUD left at 4:3. The replay, the
+# credits' race and the track editor are left out of black at the sides (`unchecked black`): each has near-black with
+# something drawn at its edge, which the check can't tell from black stopping short. The replay and the credits' race
+# are races, so each window's is its own: the replay's stadium roof with a grey post at the 16:9 window's right edge
+# as the camera pans (1.31 s in a row), the credits' dark forest at the view's side at 32:9 (0.11 s). The editor's
+# track view is black round the arena, out to the panel at the window's left edge (at 32:9, 72 of 144 rows black to
+# 109 pixels out from the view's side, held as long as the editor shows).
 # Two steps go past what keys can do in a few seconds. A race's end: the computer drives the player's bike home over
 # one lap, the word at 0x800E4848 written as 0x01000000 (gRiders[0].isCpu, which the game sets itself as a player
 # finishes, and the three bytes after it cleared) and the event's laps, the high half of 0x800F0F68, as 1 beside its 6
@@ -64,205 +73,200 @@
 27.5 until 0x800F5164 0xFFFFFFFF 0x800CE108 10 Space
 29.5 shot 10_rider_select
 29.5 until 0x800C3308 0xFFFFFFFF 0x800C32B4 30 Space
-32.5 shot 11_flyover
-37.5 shot 12_flyover2
-41.5 key Space
-45.5 key Space
-47.5 shot 13_countdown
-49.5 until 0x800F0F48 0xFFFFFFFF 0x5 30 Space
-49.5 unchecked middle
-50 down Space
-55 shot 14_quarry
-60 shot 14_quarry2
-60 up Space
-60.5 until 0x800E40B0 0xFFFFFFFF 0x1 10 Enter
-62 shot 15_quarry_pause
-62 until 0x800E4108 0xFFFFFFFF 0x3 10 Down
-62.5 until 0x800E40B0 0xFFFFFFFF 0x4 10 Space
-63 until 0x800E4108 0xFFFFFFFF 0x0 10 Up
-63.5 until 0x800E4098 0xFFFFFFFF 0x6 10 Space
-63.5 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30
-63.5 checked middle
-65 shot 15_quarry_main_menu
+29.5 until 0x800E4098 0xFFFFFFFF 0x1 30
+29.5 unchecked middle
+31.5 shot 11_flyover
+36.5 shot 12_flyover2
+40.5 until 0x800F0710 0x80 0x0 15 Space
+42.5 shot 13_countdown
+44.5 until 0x800F0F48 0xFFFFFFFF 0x5 30 Space
+45 down Space
+50 shot 14_quarry
+55 shot 14_quarry2
+55 up Space
+55.5 until 0x800E40B0 0xFFFFFFFF 0x1 10 Enter
+57 shot 15_quarry_pause
+57 until 0x800E4108 0xFFFFFFFF 0x3 10 Down
+57.5 until 0x800E40B0 0xFFFFFFFF 0x4 10 Space
+58 until 0x800E4108 0xFFFFFFFF 0x0 10 Up
+58.5 until 0x800E4098 0xFFFFFFFF 0x6 10 Space
+58.5 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30
+58.5 checked middle
+60 shot 15_quarry_main_menu
 
 # Season: its screens to the first round's first race, its intro left by A, a stretch of racing and Quit.
-65 until 0x800F0714 0xFFFFFFFF 0x0 10 Up
-66 key Space
-67.5 shot 16_season
-67.5 until 0x800C3308 0xFFFFFFFF 0x800C32B4 60 Space
-68.5 key Space
-70.5 key Space
-72.5 shot 17_season_countdown
-72.5 until 0x800F0F48 0xFFFFFFFF 0x5 30 Space
-72.5 unchecked middle
-73 down Space
-76 shot 18_season
-79 shot 18_season2
-79 up Space
-79.5 until 0x800E40B0 0xFFFFFFFF 0x1 10 Enter
-81 shot 19_season_pause
-81 until 0x800E4108 0xFFFFFFFF 0x3 10 Down
-81.5 until 0x800E40B0 0xFFFFFFFF 0x4 10 Space
-82 until 0x800E4108 0xFFFFFFFF 0x0 10 Up
-82.5 until 0x800E4098 0xFFFFFFFF 0x6 10 Space
-82.5 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30
-82.5 checked middle
-84 shot 19_season_main_menu
+60 until 0x800F0714 0xFFFFFFFF 0x0 10 Up
+61 key Space
+62.5 shot 16_season
+62.5 until 0x800C3308 0xFFFFFFFF 0x800C32B4 60 Space
+62.5 until 0x800E4098 0xFFFFFFFF 0x1 30
+63.5 until 0x800F0710 0x80 0x0 15 Space
+65.5 shot 17_season_countdown
+65.5 until 0x800F0F48 0xFFFFFFFF 0x5 30 Space
+65.5 unchecked middle
+66 down Space
+69 shot 18_season
+72 shot 18_season2
+72 up Space
+72.5 until 0x800E40B0 0xFFFFFFFF 0x1 10 Enter
+74 shot 19_season_pause
+74 until 0x800E4108 0xFFFFFFFF 0x3 10 Down
+74.5 until 0x800E40B0 0xFFFFFFFF 0x4 10 Space
+75 until 0x800E4108 0xFFFFFFFF 0x0 10 Up
+75.5 until 0x800E4098 0xFFFFFFFF 0x6 10 Space
+75.5 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30
+75.5 checked middle
+77 shot 19_season_main_menu
 
 # Exhibition on Kyoto (the track list's cursor at 0x800F0720 kept from the last race), driven home by the computer over
 # one lap: the finish, Race Results, its menu, the replay (left by Start) and Main Menu.
-84 until 0x800F0714 0xFFFFFFFF 0x1 10 Down
-85 until 0x800F5164 0xFFFFFFFF 0x800CE134 10 Space
-86.5 until 0x800F0720 0xFFFFFFFF 0x0 10 Up
-87.5 until 0x800C3308 0xFFFFFFFF 0x800C32B4 30 Space
-88.5 key Space
-90.5 key Space
-90.5 until 0x800F0F48 0xFFFFFFFF 0x5 30 Space
-90.5 unchecked middle
-91 poke 0x800F0F68 0x00010006
-91 poke 0x800E4848 0x01000000
-99 shot 20_kyoto_computer
-99 until 0x800F5164 0xFFFFFFFF 0x800CDFA8 90 Space
-101 shot 21_race_results
-101 until 0x800F09F8 0xFFFFFFFF 0x3 10 Space
-102.5 shot 22_results_menu
-102.5 key Down
-103.5 until 0x800C3308 0xFFFFFFFF 0x800C32B4 15 Space
-107.5 shot 23_replay
-113.5 shot 24_replay2
-113.5 until 0x800C3308 0xFFFFFFFF 0x800C3298 15 Enter
-115.5 shot 25_after_replay
-115.5 key Down
-116.5 key Space
-116.5 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30 Shift
-116.5 checked middle
-118 shot 26_main_menu
+77 until 0x800F0714 0xFFFFFFFF 0x1 10 Down
+78 until 0x800F5164 0xFFFFFFFF 0x800CE134 10 Space
+79.5 until 0x800F0720 0xFFFFFFFF 0x0 10 Up
+80.5 until 0x800C3308 0xFFFFFFFF 0x800C32B4 30 Space
+80.5 until 0x800E4098 0xFFFFFFFF 0x1 30
+81.5 until 0x800F0710 0x80 0x0 15 Space
+81.5 until 0x800F0F48 0xFFFFFFFF 0x5 30 Space
+81.5 unchecked middle
+82 poke 0x800F0F68 0x00010006
+82 poke 0x800E4848 0x01000000
+90 shot 20_kyoto_computer
+90 until 0x800F5164 0xFFFFFFFF 0x800CDFA8 90 Space
+92 shot 21_race_results
+92 until 0x800F09F8 0xFFFFFFFF 0x3 10 Space
+93.5 shot 22_results_menu
+93.5 key Down
+94.5 until 0x800C3308 0xFFFFFFFF 0x800C32B4 15 Space
+94.5 unchecked black
+98.5 shot 23_replay
+104.5 shot 24_replay2
+104.5 until 0x800C3308 0xFFFFFFFF 0x800C3298 15 Enter
+104.5 checked black
+106.5 shot 25_after_replay
+106.5 key Down
+107.5 key Space
+107.5 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30 Shift
+107.5 checked middle
+109 shot 26_main_menu
 
 # Time Trials, its first track.
-118 until 0x800F0714 0xFFFFFFFF 0x2 10 Down
-119 until 0x800C3308 0xFFFFFFFF 0x800C32B4 10 Space
-120 key Space
-122 key Space
-124 shot 27_time_trial_countdown
-124 until 0x800F0F48 0xFFFFFFFF 0x5 30 Space
-124 unchecked middle
-124.5 down Space
-127.5 shot 28_time_trial
-130.5 shot 28_time_trial2
-130.5 up Space
-131 until 0x800E40B0 0xFFFFFFFF 0x1 10 Enter
-132.5 shot 29_time_trial_pause
-132.5 until 0x800E4108 0xFFFFFFFF 0x3 10 Down
-133 until 0x800E40B0 0xFFFFFFFF 0x4 10 Space
-133.5 until 0x800E4108 0xFFFFFFFF 0x0 10 Up
-134 until 0x800E4098 0xFFFFFFFF 0x6 10 Space
-134 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30
-134 checked middle
-135.5 shot 29_time_trial_main_menu
+109 until 0x800F0714 0xFFFFFFFF 0x2 10 Down
+110 until 0x800C3308 0xFFFFFFFF 0x800C32B4 10 Space
+110 until 0x800E4098 0xFFFFFFFF 0x1 30
+111 until 0x800F0710 0x80 0x0 15 Space
+113 shot 27_time_trial_countdown
+113 until 0x800F0F48 0xFFFFFFFF 0x5 30 Space
+113 unchecked middle
+113.5 down Space
+116.5 shot 28_time_trial
+119.5 shot 28_time_trial2
+119.5 up Space
+120 until 0x800E40B0 0xFFFFFFFF 0x1 10 Enter
+121.5 shot 29_time_trial_pause
+121.5 until 0x800E4108 0xFFFFFFFF 0x3 10 Down
+122 until 0x800E40B0 0xFFFFFFFF 0x4 10 Space
+122.5 until 0x800E4108 0xFFFFFFFF 0x0 10 Up
+123 until 0x800E4098 0xFFFFFFFF 0x6 10 Space
+123 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30
+123 checked middle
+124.5 shot 29_time_trial_main_menu
 
-# Special Tracks: the Desert, then the Stunt Course.
-135.5 until 0x800F0714 0xFFFFFFFF 0x3 10 Down
-136.5 until 0x800F5164 0xFFFFFFFF 0x800CE0B0 10 Space
-138 shot 30_special_tracks
-138 until 0x800C3308 0xFFFFFFFF 0x800C32B4 60 Space
-139 key Space
-141 key Space
-143 shot 31_desert_start
-143 until 0x800F0F48 0xFFFFFFFF 0x5 30 Space
-143 unchecked middle
-143.5 down Space
-146.5 shot 32_desert
-149.5 shot 32_desert2
-149.5 up Space
-150 until 0x800E40B0 0xFFFFFFFF 0x1 10 Enter
-151.5 shot 33_desert_pause
-151.5 until 0x800E4108 0xFFFFFFFF 0x3 10 Down
-152 until 0x800E40B0 0xFFFFFFFF 0x4 10 Space
-152.5 until 0x800E4108 0xFFFFFFFF 0x0 10 Up
-153 until 0x800E4098 0xFFFFFFFF 0x6 10 Space
-153 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30
-153 checked middle
-154.5 shot 33_desert_main_menu
-154.5 until 0x800F0714 0xFFFFFFFF 0x3 10 Down
-155.5 until 0x800F5164 0xFFFFFFFF 0x800CE0B0 10 Space
-157 until 0x800F0718 0xFFFFFFFF 0x1 10 Down
-158 until 0x800C3308 0xFFFFFFFF 0x800C32B4 60 Space
-159 key Space
-161 key Space
-163 shot 34_stunt_start
-163 until 0x800F0F48 0xFFFFFFFF 0x5 30 Space
-163 unchecked middle
-163.5 down Space
-166.5 shot 35_stunt
-169.5 shot 35_stunt2
-169.5 up Space
-170 until 0x800E40B0 0xFFFFFFFF 0x1 10 Enter
-171.5 shot 36_stunt_pause
-171.5 until 0x800E4108 0xFFFFFFFF 0x3 10 Down
-172 until 0x800E40B0 0xFFFFFFFF 0x4 10 Space
-172.5 until 0x800E4108 0xFFFFFFFF 0x0 10 Up
-173 until 0x800E4098 0xFFFFFFFF 0x6 10 Space
-173 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30
-173 checked middle
-174.5 shot 36_stunt_main_menu
+# Special Tracks: the Desert, then the Stunt Course, each under way as it loads, with no intro.
+124.5 until 0x800F0714 0xFFFFFFFF 0x3 10 Down
+125.5 until 0x800F5164 0xFFFFFFFF 0x800CE0B0 10 Space
+127 shot 30_special_tracks
+127 until 0x800C3308 0xFFFFFFFF 0x800C32B4 60 Space
+132 shot 31_desert_start
+132 until 0x800F0F48 0xFFFFFFFF 0x5 30 Space
+132 unchecked middle
+132.5 down Space
+135.5 shot 32_desert
+138.5 shot 32_desert2
+138.5 up Space
+139 until 0x800E40B0 0xFFFFFFFF 0x1 10 Enter
+140.5 shot 33_desert_pause
+140.5 until 0x800E4108 0xFFFFFFFF 0x3 10 Down
+141 until 0x800E40B0 0xFFFFFFFF 0x4 10 Space
+141.5 until 0x800E4108 0xFFFFFFFF 0x0 10 Up
+142 until 0x800E4098 0xFFFFFFFF 0x6 10 Space
+142 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30
+142 checked middle
+143.5 shot 33_desert_main_menu
+143.5 until 0x800F0714 0xFFFFFFFF 0x3 10 Down
+144.5 until 0x800F5164 0xFFFFFFFF 0x800CE0B0 10 Space
+146 until 0x800F0718 0xFFFFFFFF 0x1 10 Down
+147 until 0x800C3308 0xFFFFFFFF 0x800C32B4 60 Space
+152 shot 34_stunt_start
+152 until 0x800F0F48 0xFFFFFFFF 0x5 30 Space
+152 unchecked middle
+152.5 down Space
+155.5 shot 35_stunt
+158.5 shot 35_stunt2
+158.5 up Space
+159 until 0x800E40B0 0xFFFFFFFF 0x1 10 Enter
+160.5 shot 36_stunt_pause
+160.5 until 0x800E4108 0xFFFFFFFF 0x3 10 Down
+161 until 0x800E40B0 0xFFFFFFFF 0x4 10 Space
+161.5 until 0x800E4108 0xFFFFFFFF 0x0 10 Up
+162 until 0x800E4098 0xFFFFFFFF 0x6 10 Space
+162 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30
+162 checked middle
+163.5 shot 36_stunt_main_menu
 
 # Options: Controller Settings, the Records turned a page, and the credits, a race on The Gravel Pit under them.
-174.5 until 0x800F0714 0xFFFFFFFF 0x4 10 Down
-175.5 until 0x800F5164 0xFFFFFFFF 0x800CE058 10 Space
-177 shot 37_options
-177 until 0x800F0B58 0xFFFF0000 0x30000 10 Down
-178 until 0x800F0B58 0xFFFF0000 0x40000 10 Right
-179 until 0x800F5164 0xFFFFFFFF 0x800CE268 10 Space
-180.5 shot 38_controller_settings
-180.5 until 0x800F5164 0xFFFFFFFF 0x800CE058 10 Shift
-182 until 0x800F0B58 0xFFFF0000 0x60000 10 Down
-183 until 0x800F0B58 0xFFFF0000 0x50000 10 Left
-184 until 0x800F5164 0xFFFFFFFF 0x800CE23C 10 Space
-186 shot 39_records
-186 key Right
-188 shot 40_records_page
-188 until 0x800F5164 0xFFFFFFFF 0x800CE058 10 Shift
-189.5 until 0x800F0B58 0xFFFF0000 0x60000 10 Right
-190.5 until 0x800C3308 0xFFFFFFFF 0x800C32B4 30 Space
-190.5 unchecked middle
-198.5 shot 41_credits
-206.5 shot 42_credits2
-207.5 until 0x800F5164 0xFFFFFFFF 0x800CE058 30 Enter
-207.5 checked middle
-209 shot 43_options_back
-209 key Shift
+163.5 until 0x800F0714 0xFFFFFFFF 0x4 10 Down
+164.5 until 0x800F5164 0xFFFFFFFF 0x800CE058 10 Space
+166 shot 37_options
+166 until 0x800F0B58 0xFFFF0000 0x30000 10 Down
+167 until 0x800F0B58 0xFFFF0000 0x40000 10 Right
+168 until 0x800F5164 0xFFFFFFFF 0x800CE268 10 Space
+169.5 shot 38_controller_settings
+169.5 until 0x800F5164 0xFFFFFFFF 0x800CE058 10 Shift
+171 until 0x800F0B58 0xFFFF0000 0x60000 10 Down
+172 until 0x800F0B58 0xFFFF0000 0x50000 10 Left
+173 until 0x800F5164 0xFFFFFFFF 0x800CE23C 10 Space
+175 shot 39_records
+175 key Right
+177 shot 40_records_page
+177 until 0x800F5164 0xFFFFFFFF 0x800CE058 10 Shift
+178.5 until 0x800F0B58 0xFFFF0000 0x60000 10 Right
+179.5 until 0x800C3308 0xFFFFFFFF 0x800C32B4 30 Space
+179.5 unchecked middle,black
+187.5 shot 41_credits
+195.5 shot 42_credits2
+196.5 until 0x800F5164 0xFFFFFFFF 0x800CE058 30 Enter
+196.5 checked middle,black
+198 shot 43_options_back
+198 key Shift
 
 # Custom Tracks: Go To Editor, its Edit menu, a straight added, turned and placed, and the track moved.
-209 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 10 Shift
-210.5 until 0x800F0714 0xFFFFFFFF 0x5 10 Down
-211.5 key Space
-213 shot 44_custom
-213 key Down
-214 until 0x800C3308 0xFFFFFFFF 0x800C32D0 15 Space
-214 unchecked hud
-217 shot 45_editor
-217 key Space
-218.5 shot 46_editor_edit
-218.5 key Space
-220.5 shot 47_editor_straight
-222.5 key Right
-224 key Right
-225.5 shot 48_editor_turned
-226 key Space
-228 shot 49_editor_placed
-228 key Shift
-230 shot 50_editor_back
-230 key Down
-231 key Down
-232 key Down
-233 key Down
-234 shot 51_editor_move_cursor
-234 key Space
-236 shot 52_editor_move_track
-237 down Right
-240 up Right
-240 shot 53_editor_moved
-241 key Space
-243 shot 54_editor_after_move
-252 shot 55_editor_held
-253 end
+198 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 10 Shift
+199.5 until 0x800F0714 0xFFFFFFFF 0x5 10 Down
+200.5 key Space
+202 shot 44_custom
+202 key Down
+203 until 0x800C3308 0xFFFFFFFF 0x800C32D0 15 Space
+203 unchecked hud,black
+206 shot 45_editor
+206 key Space
+207.5 shot 46_editor_edit
+207.5 key Space
+209.5 shot 47_editor_straight
+211.5 key Right
+213 key Right
+214.5 shot 48_editor_turned
+215 key Space
+217 shot 49_editor_placed
+217 key Shift
+219 shot 50_editor_back
+219 until 0x800CF4E0 0x0000FFFF 0x4 10 Down
+220 shot 51_editor_move_cursor
+220 key Space
+222 shot 52_editor_move_track
+223 down Right
+226 up Right
+226 shot 53_editor_moved
+227 key Space
+229 shot 54_editor_after_move
+238 shot 55_editor_held
+239 end

@@ -177,14 +177,30 @@ func = "nes_audio_update"
 before_vram = 0x800A2274
 text = "{ void eb_ai_status(uint8_t*, recomp_context*); eb_ai_status(rdram, ctx); }"
 
-# The race's projection widened with its view (src/game/widescreen.cpp, which widens one player's view from 472 of the
-# screen's 512 pixels to all of them, and two players' one above the other from 400): the aspect render_draw_race gives
-# guPerspective (320 or, in the high resolution mode, 640 over the screen's height), in $a3 here, times eb_view_scale:
-# 512/472 or 512/400 for those views, 1 for those the game keeps (side by side, three or four players, the inset view).
+# The race's projection widened and heightened with its view (src/game/widescreen.cpp, which has each view fill its part
+# of the screen): the field of view and the aspect render_draw_race gives guPerspective, in $a2 and $a3 here.
 [[patches.hook]]
 func = "render_draw_race"
 before_vram = 0x80004254
-text = "{ float eb_view_scale(uint8_t*); union { uint32_t u; float f; } a; a.u = (uint32_t)ctx->r7; a.f *= eb_view_scale(rdram); ctx->r7 = (int32_t)a.u; }"
+text = "{ void eb_view_projection(uint8_t*, recomp_context*); eb_view_projection(rdram, ctx); }"
+
+# The full views in place for the race's 3D, and the game's boxes for its HUD, the track's intro, the pause menu and the
+# menus drawn over a race (src/game/widescreen.cpp's eb_view_rects): at render_draw_race's start and
+# render_update_viewports', which makes the views' rectangles and viewports, and after render_draw_race's riders.
+[[patches.hook]]
+func = "render_draw_race"
+before_vram = 0x80003CC0
+text = "{ void eb_view_rects(uint8_t*, int32_t); eb_view_rects(rdram, 1); }"
+
+[[patches.hook]]
+func = "render_update_viewports"
+before_vram = 0x8000B028
+text = "{ void eb_view_rects(uint8_t*, int32_t); eb_view_rects(rdram, 1); }"
+
+[[patches.hook]]
+func = "render_draw_race"
+before_vram = 0x80006BFC
+text = "{ void eb_view_rects(uint8_t*, int32_t); eb_view_rects(rdram, 0); }"
 
 # The race's culling widened with its view and the picture (src/game/widescreen.cpp's eb_cull_scale, 1 where the game's
 # view is kept): in arn_cull_models the half-width a stadium model's centre may lie across, half its depth ahead (and
