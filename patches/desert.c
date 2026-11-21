@@ -33,7 +33,6 @@
 void *res_load(ResSet *set, s32 id);
 void *mem_alloc_dbg(s32 size, u32 flags, s32 owner, s32 line);
 void mem_fill(u8 *dst, u8 value, s32 len);
-void mem_fill_2(void *dst, s32 value, s32 len);
 void fractal_init(u8 *map);
 void fractal_reset(void);
 void fractal_generate_step(s32 steps);
@@ -144,8 +143,9 @@ RECOMP_PATCH void des_init(void) {
     for (i = 0; i < 16; i++) {
         sDesPatchDLs[i] = des_build_patch_dl(i);
     }
-    mem_fill_2(sDesPatchGrid, -1, 3 * 0x400 * sizeof(s16));
-    mem_fill_2(sDesPatchGridOrigin, 0, 3 * sizeof(s32));
+    // The decomp's mem_fill_2, mem_fill under another name.
+    mem_fill((u8 *)sDesPatchGrid, 0xFF, 3 * 0x400 * sizeof(s16));
+    mem_fill((u8 *)sDesPatchGridOrigin, 0, 3 * sizeof(s32));
     sDesFreePatchCount = sPoolSize;
     for (i = sPoolSize - 1; i >= 0; i--) {
         sFreePatches[i] = i;
