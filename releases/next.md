@@ -1,1 +1,0 @@
-- Draw Distance in the General tab, Far by default: the stadium's far jumps, walls and banners are drawn lit to the other side of the arena, where the game fades them to black past a distance and leaves the farthest out. Original keeps the console's look
