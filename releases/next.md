@@ -1,1 +1,0 @@
-- The track's intro before a race uses a wide window: the track's name sits at its left side and a season's round cards at its right, and the bottom panel's best lap initials and lap count sit inside their boxes again, at any window shape (#39)
