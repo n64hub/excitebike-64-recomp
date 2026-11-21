@@ -63,7 +63,7 @@
 #include "window_icon_bmp.h"
 #endif
 
-const std::string version_string = "0.1.5";
+const std::string version_string = "0.1.6";
 
 template<typename... Ts>
 void exit_error(const char* str, Ts ...args) {
@@ -600,15 +600,19 @@ int main(int argc, char** argv) {
     // Presented at the VI (Skip Buffering), not as soon as a task fills a framebuffer (Present Early), which shows a
     // frame drawn in several tasks before its last.
     //
-    // No Render to RAM, RT64's copy of each list's frame into RDRAM: the game's CPU never reads a frame it drew (main.c's
-    // one read is a debug screenshot that writes nowhere), and it uses the framebuffer it isn't drawing as scratch
-    // memory, copying a track's models into it as the race loads (tubegfx.c's tube_build_dlists), which a frame copied
-    // there afterwards would overwrite. It does read the Z buffer after a race's frame (sky_scan_zbuffer), but only to
-    // draw less of the sky, down to the lowest row still clear: without the copy it finds none and draws the sky down
-    // the whole view, behind the track, as it does in a stadium.
+    // Render to RAM, RT64's copy of each list's frame and Z buffer into RDRAM, a list late: after each race frame the
+    // game reads the Z buffer back (main.c's SCHED_CLIENT_GFX_DONE), round each light on the track to judge how much of
+    // it shows (sun.c's sun_check_occlusion), which sets the size of its glow and the strength of its hexagonal lens
+    // flare, and to find the lowest row the sky shows down to (sky_scan_zbuffer, which patches/sky.c keeps at the
+    // whole view for a wide window's sides). Without the copy it read whatever the load had left there: a stadium's
+    // lights glowed through the hills in front of them, and only some flared. A frame one list old is what it needs,
+    // so the copy lands late and no list waits for the GPU (N64Recomp-browser's docs/findings.md). The game also uses the framebuffer it isn't drawing as scratch memory as a race loads
+    // (tubegfx.c's tube_build_dlists copies a track's models there): the late copy keeps every word the CPU wrote after
+    // the list ended.
     ultramodern::renderer::callbacks_t renderer_callbacks{
         .create_render_context = [](uint8_t* rdram, ultramodern::renderer::WindowHandle window_handle, bool developer_mode) {
-            recompui::renderer::set_render_to_ram(false);
+            recompui::renderer::set_render_to_ram(true);
+            recompui::renderer::set_render_to_ram_late(true);
             return recompui::renderer::create_render_context(rdram, window_handle, ultramodern::renderer::PresentationMode::SkipBuffering, developer_mode);
         },
     };

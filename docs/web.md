@@ -70,9 +70,9 @@ shaders it missed (`play_page.mjs` counts the misses), which go into the section
 ## How it plays
 
 The game draws its races into a 512x240 framebuffer and its menus into a 320x240 one, both shown at 4:3: the
-framebuffer's pixel is as wide as the TV shows it (N64Recomp-browser's `docs/forks.md`). Render to RAM is off: the
-game's CPU reads no frame it drew, and copies a track's models into the framebuffer it isn't drawing as the race loads
-(`src/main/main.cpp` says why), so a frame copied back would overwrite them.
+framebuffer's pixel is as wide as the TV shows it (N64Recomp-browser's `docs/forks.md`). Render to RAM is on, copied
+a list late: the game reads a race frame's Z buffer back for the stadium lights' glows and flares, and a frame one list
+old does for that, so no list waits for the GPU (`src/main/main.cpp` says why).
 
 It draws at the display's rate, RT64's frames between the game's, and at the canvas's size: on an idle host with a
 desktop GPU (an RTX 2070), uncapped in Chrome, the regular plan presented 350 frames a second (300-360, held by the

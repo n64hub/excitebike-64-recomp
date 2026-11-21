@@ -75,8 +75,9 @@ This repo is the game: its recompilation, the patches over it, the desktop build
   priority), 3 the game's main at priority 10, 5 the scheduler's client.
 - **Scratch memory.** The game uses the framebuffer it isn't drawing and the Z buffer as scratch memory: a race's load
   copies the track's models into the spare framebuffer (tubegfx.c's `tube_build_dlists`), and the height grids, the
-  map and the editor's save work in the Z buffer. Its CPU reads no frame it drew, so RT64's Render to RAM is off
-  (`main.cpp`): a frame copied back into RDRAM would land on that scratch. Without it, RT64 takes the spare
-  framebuffer's copy for something the CPU wrote after the race's first frame filled it black, unless
-  `RT64_HASH_FILLED_FRAMEBUFFERS` is on (`CMakeLists.txt`): a flash of noise across the top of the screen in the black
-  before the title.
+  map and the editor's save work in the Z buffer. After each race frame its CPU reads the Z buffer back, for the
+  stadium lights' glows and flares (sun.c's `sun_check_occlusion`) and the sky's height (`patches/sky.c` keeps that at
+  the whole view), so RT64's Render to RAM is on, copied a list late (`main.cpp`): the late copy keeps every word the
+  CPU wrote after the list ended, so it keeps off that scratch. RT64 takes the spare framebuffer's copy for
+  something the CPU wrote after the race's first frame filled it black, unless `RT64_HASH_FILLED_FRAMEBUFFERS` is on
+  (`CMakeLists.txt`): a flash of noise across the top of the screen in the black before the title.
