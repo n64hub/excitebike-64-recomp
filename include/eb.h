@@ -14,6 +14,8 @@ namespace eb {
 
     // The settings (config.cpp): RecompFrontend's tabs.
     void init_config();
+    // Whether the General tab's Draw Distance is Far: the stadium drawn to its far side, unfogged (draw_distance.cpp).
+    bool draw_far();
 
     // The game image, unpacked into RDRAM as the boot loader does (boot.cpp), before the game's entry runs.
     void unpack_game(uint8_t* rdram);

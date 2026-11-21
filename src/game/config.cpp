@@ -1,14 +1,26 @@
 // The settings: RecompFrontend's General, Controls, Graphics, Sound and Mods tabs, with its default bindings. Its own
 // Graphics options carry what a recomp needs: Resolution and MS Anti-Aliasing (high resolution), Framerate
-// (interpolation to the display's rate) and Aspect Ratio and HUD Placement (widescreen). Its default bindings change in
-// one way: the arrow keys steer and move through the menus too.
+// (interpolation to the display's rate) and Aspect Ratio and HUD Placement (widescreen). The General tab adds the
+// game's own: Draw Distance (eb::draw_far, src/game/draw_distance.cpp). Its default bindings change in one way: the
+// arrow keys steer and move through the menus too.
 
+#include <cstdint>
 #include <filesystem>
+#include <variant>
 
 #include "recompinput/recompinput.h"
 #include "recompui/config.h"
 #include "util/file.h"
 #include "eb.h"
+
+namespace {
+    constexpr const char* draw_distance_id = "draw_distance";
+
+    enum class DrawDistance : uint32_t {
+        Original,
+        Far,
+    };
+}
 
 // The stock defaults put the C buttons on the arrow keys and the stick on WASD alone, and the game's menus read the stick
 // (a few the D-pad too), so the arrows moved through none of them. Here the arrows are a second stick, steering and the
@@ -31,6 +43,11 @@ static void set_default_bindings() {
     recompinput::set_default_mapping_for_keyboard(GameInput::C_RIGHT, { InputField::keyboard(SDL_SCANCODE_H) });
 }
 
+bool eb::draw_far() {
+    auto value = recompui::config::get_general_config().get_option_value(draw_distance_id);
+    return std::get<uint32_t>(value) == static_cast<uint32_t>(DrawDistance::Far);
+}
+
 void eb::init_config() {
     set_default_bindings();
     std::filesystem::path app_dir = recompui::file::get_app_folder_path();
@@ -42,7 +59,16 @@ void eb::init_config() {
     general_options.has_rumble_strength = true;
     general_options.has_gyro_sensitivity = true;
     general_options.has_mouse_sensitivity = true;
-    recompui::config::create_general_tab(general_options);
+    recomp::config::Config& general = recompui::config::create_general_tab(general_options);
+    general.add_enum_option(
+        draw_distance_id,
+        "Draw Distance",
+        "How far across a stadium the track is drawn. <recomp-color primary>Far</recomp-color>: all of it in sight, lit "
+        "as the near track is. <recomp-color primary>Original</recomp-color>: as a console draws it, the jumps and walls "
+        "past a distance in the stadium's black fog, dark shapes against the stands, and the farthest left out.",
+        {{DrawDistance::Original, "Original"}, {DrawDistance::Far, "Far"}},
+        DrawDistance::Far
+    );
     recompui::config::create_controls_tab();
     recompui::config::create_graphics_tab();
     recompui::config::create_sound_tab();
