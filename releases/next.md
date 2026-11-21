@@ -1,0 +1,1 @@
+- The track's intro before a race (its name, the season's rounds and the bottom panel of best times, best lap and laps) is laid out as on the console again: the best lap's initials and the lap count sit inside their boxes instead of past the panel's right edge, in a wide window and at 4:3 (#39)
