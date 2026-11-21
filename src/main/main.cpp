@@ -97,10 +97,10 @@ ultramodern::gfx_callbacks_t::gfx_data_t create_gfx() {
 // A port has a controller when its player is assigned, or until players are assigned when it is port 1 or a connected
 // pad's (RECOMPINPUT_PADS_IN_ORDER: the second pad connected plays port 2, and so on), as a console has a controller
 // in each port a pad is plugged into: the game offers riders for those ports alone, up to four. Each has a Rumble Pak
-// in it, which the game finds with osPfsInitPak (src/game/rumble_pak.cpp) and starts with osMotorInit (the runtime's, to
-// that port's pad): with no pak the runtime's osMotorInit answers PFS_ERR_NOPACK and the game never rumbles. The game keeps its save on the cartridge's EEPROM, and
-// a Controller Pak only for ghosts and user tracks a player copies there, which the Rumble Pak leaves out. The strength
-// is the General tab's.
+// in it, which src/game/rumble_pak.cpp starts after the game's probe of the port with osPfsInitPak, with osMotorInit
+// (the runtime's, to that port's pad): with no pak the runtime's osMotorInit answers PFS_ERR_NOPACK and the game never
+// rumbles. The game keeps its save on the cartridge's EEPROM, and on a Controller Pak, port 1's (supported_games), only
+// the ghosts and the tracks a player copies there. The strength is the General tab's.
 ultramodern::input::connected_device_info_t get_connected_device_info(int controller_num) {
     bool unassigned = recompinput::players::get_number_of_assigned_players() == 0;
     if ((unassigned && (controller_num == 0 || (size_t)controller_num < recompinput::get_detected_controller_count())) ||
@@ -377,6 +377,10 @@ std::vector<recomp::GameEntry> supported_games = {
         .is_enabled = true,
         .entrypoint_address = get_entrypoint_address(),
         .entrypoint = eb_entrypoint,
+        // A Controller Pak in port 1, for the Time Trial ghosts and the tracks a player copies there:
+        // saves/controllerpak_1.mpk (the runtime's librecomp/src/pak.cpp). Its Rumble Pak stays beside it
+        // (src/game/rumble_pak.cpp).
+        .controller_pak_ports = 0b0001,
     },
 };
 
