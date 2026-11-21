@@ -1,15 +1,16 @@
 // The track's lights glow out to the window's edges: a stadium's light banks past the 4:3 frame's sides in a wide
 // window, where the track is drawn (src/game/widescreen.cpp), glowed only inside it. sun_update_screen_pos (the
 // decomp's src/game/sun.c, copied here as it is but for the changes below) marks a light on the screen only within 50
-// pixels of its sides, so a bank out in the window's side was drawn as its bare grid of bulbs, with no glow. And
-// sun_draw_flare draws each glow under the view's scissor, which stopped one straddling the old frame's side straight
-// down it, and an outdoor track's glow as a rectangle clamped to x 0, whose coordinates can't start left of the screen.
+// pixels of its sides, so a bank out in the window's side was drawn as its bare grid of bulbs, with no glow.
+// sun_draw_flare draws each glow under the view's scissor, and one straddling the old frame's side was cut straight
+// down it; and it draws an outdoor track's glow as a rectangle clamped to x 0, whose coordinates can't start left of
+// the screen.
 //
-// So for the view RT64 widens to the window (one player's: the lights are drawn with one screen only), the bound reaches
-// as far past each side as the window shows, eb_particle_margin's pixels of the screen (src/game/widescreen.cpp); the
-// glows are drawn under an extended scissor as far out, the view's own rows high, the game's put back after them; and a
-// rectangle glow is RT64's gEXTextureRectangle, whose coordinates are signed 16 bits, at the same place and size. With
-// no margin (Original, a window no wider than 4:3) all three are the game's own.
+// So for the view RT64 widens to the window (one player's: the lights are drawn with one screen only), the bound
+// reaches as far past each side as the window shows, eb_particle_margin's pixels of the screen
+// (src/game/widescreen.cpp); the glows are drawn under an extended scissor as far out, the view's own rows high, the
+// game's put back after them; and a rectangle glow is RT64's gEXTextureRectangle, whose coordinates are signed 16
+// bits, at the same place and size. With no margin (Original, a window no wider than 4:3) all three are the game's own.
 //
 // How much of a light shows is read from the Z buffer round it after the frame (sun_check_occlusion, left as it is),
 // which RT64 copies back at the 4:3 frame's size: for a light out in the window's side it samples the frame's edge
