@@ -202,6 +202,19 @@ func = "render_draw_race"
 before_vram = 0x80006BFC
 text = "{ void eb_view_rects(uint8_t*, int32_t); eb_view_rects(rdram, 0); }"
 
+# The track's intro laid out in the game's own one-player view, not its box (src/game/widescreen.cpp's eb_intro_rect),
+# and its top bar and round cards placed at the wide picture's sides (src/game/hud.cpp's eb_intro_begin and
+# eb_intro_end): on both sides of render_draw_race's call to hud_draw_track_intro, its list in $fp before and $v0 after.
+[[patches.hook]]
+func = "render_draw_race"
+before_vram = 0x80006D78
+text = "{ int32_t eb_intro_rect(uint8_t*, int32_t); void eb_intro_begin(uint8_t*, uint32_t); if (eb_intro_rect(rdram, 1)) eb_intro_begin(rdram, (uint32_t)ctx->r30); }"
+
+[[patches.hook]]
+func = "render_draw_race"
+before_vram = 0x80006D80
+text = "{ int32_t eb_intro_rect(uint8_t*, int32_t); void eb_intro_end(uint8_t*, uint32_t); eb_intro_end(rdram, (uint32_t)ctx->r2); eb_intro_rect(rdram, 0); }"
+
 # The General tab's Draw Distance (src/game/draw_distance.cpp): in arn_cull_models, once it has loaded the distances
 # past which a stadium model is fogged (its stack's 0x54) and not drawn ($v1, which the branch's delay slot stores at
 # 0x58), eb_draw_distance raises both with Far.

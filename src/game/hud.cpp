@@ -57,6 +57,8 @@ constexpr uint32_t EB_SCREEN_WIDTH = 0x800F1D8C;    // gScreenWidth: 512, or 640
 constexpr uint32_t EB_SCREEN_HEIGHT = 0x800F1D90;   // gScreenHeight: 240 or 480
 constexpr uint32_t EB_SCREEN_VIEWPORT = 0x800C2F28; // gScreenViewport, the whole screen's
 constexpr uint32_t EB_NUM_VIEWS = 0x800C2ED4;       // gNumViews
+constexpr uint32_t EB_VIEW_RECTS = 0x800E2038;      // gViewRects: the first, one player's x, y, width and height
+constexpr uint32_t EB_GAME_MODE = 0x800F075C;       // gGame.mode (gGame 0x800F0710, +0x4C): GAME_MODE_SEASON is 1
 constexpr uint32_t EB_INSET_VIEW = 0x800C2CC4;      // gInsetViewActive
 constexpr uint32_t EB_SPLIT_VERTICAL = 0x800C2CC8;  // gSplitVertical
 
@@ -254,6 +256,7 @@ struct Cmd {
     uint32_t w0, w1;
     int piece; // the piece it starts drawing for, or -1
     uint32_t board_end; // for the first command of the finish's checkerboard, the index past its last; else 0
+    uint32_t split; // for a rectangle of the track's intro across its top, where it is cut in two (quarter pixels); else 0
 };
 
 struct Piece {
@@ -271,6 +274,41 @@ Box g_group_box[MAX_COMMANDS];
 uint32_t g_start;
 bool g_open = false;
 uint32_t g_next_buffer = 0;
+
+// The track's intro (eb_intro_begin), placed by the game's layout of it rather than by what lies near what: its top bar,
+// the round cards and the bottom panel lie within a few pixels of each other, and joined they made one piece across the
+// middle. In the screen's pixels: the left of the round cards' column, the top bar's bottom and the bottom panel's top.
+// Only a season's intro has the round cards: the others centre "Press the A Button to Race" across their column.
+struct Intro {
+    bool on = false;
+    bool season = false;
+    float cards = 0, top = 0, panel = 0;
+} g_intro;
+
+// Where the intro's rectangle in `box` is placed from. The bottom panel and what lies on it stay in the middle, as do
+// the lines between it and the top bar ("Press the A Button to Race"); the round cards and their names go to the
+// right side, the top bar (the track's picture and name) to the left. The top bar's frame is one picture as wide as the
+// game's view, a line along its top over the cards: a rectangle of it across the cards' left is cut there, the part
+// left of it placed from the left side and the rest, the line alone, stretched from there to the right side.
+uint32_t intro_origin(const Box& box, Cmd& cmd) {
+    if (box.y0 >= g_intro.panel) {
+        return G_EX_ORIGIN_NONE;
+    }
+    if (box.x0 >= g_intro.cards) {
+        return g_intro.season ? G_EX_ORIGIN_RIGHT : G_EX_ORIGIN_NONE;
+    }
+    if (box.y1 > g_intro.top) {
+        return G_EX_ORIGIN_NONE;
+    }
+    if (box.x1 <= g_intro.cards) {
+        return G_EX_ORIGIN_LEFT;
+    }
+    if ((cmd.w0 >> 24) == G_TEXRECT) {
+        cmd.split = uint32_t(g_intro.cards) * 4;
+        return G_EX_ORIGIN_LEFT;
+    }
+    return G_EX_ORIGIN_NONE;
+}
 
 struct Writer {
     uint32_t pos, end;
@@ -385,6 +423,7 @@ void anchor(uint32_t start, uint32_t end) {
         Cmd& cmd = g_cmds[i];
         cmd.piece = -1;
         cmd.board_end = 0;
+        cmd.split = 0;
         // The checkerboard makes no piece: it is drawn over the whole view (below), and as a piece across the middle
         // it took the HUD's pieces near it there with it.
         if (i >= board_end && (cmd.board_end = board_at(i, count)) != 0) {
@@ -422,6 +461,17 @@ void anchor(uint32_t start, uint32_t end) {
         if (box.empty()) {
             continue;
         }
+        // The intro draws only rectangles, each a piece of its own.
+        if (g_intro.on) {
+            if (model) {
+                return;
+            }
+            g_pieces[pieces] = Piece{};
+            g_pieces[pieces].box = box;
+            g_pieces[pieces].origin = intro_origin(box, cmd);
+            cmd.piece = pieces++;
+            continue;
+        }
         // Rectangles join the piece before them when they lie near it. A model (the gauge's needle) is a piece of its
         // own: Mario Golf's small models lay within a few pixels of each other, and joined made one piece across the
         // middle.
@@ -437,45 +487,48 @@ void anchor(uint32_t start, uint32_t end) {
     if (pieces == 0) {
         return;
     }
-    // The game draws a line of text a glyph's texture at a time, not left to right: the finish's "Press START to
-    // Continue" drew its i's and its e after the rest, and alone they were placed from the right side and "Press" from
-    // the left. So pieces of rectangles that lie near each other, whatever order they were drawn in, are placed as
-    // one, by the box of them all (a HUD makes a few dozen pieces; past a few hundred each is placed alone, as the
-    // join below is a pass over every pair).
-    for (int p = 0; p < pieces; p++) {
-        g_group[p] = p;
-        g_group_box[p] = g_pieces[p].box;
-    }
-    auto root = [](int p) {
-        while (g_group[p] != p) {
-            p = g_group[p] = g_group[g_group[p]];
+    if (!g_intro.on) {
+        // The game draws a line of text a glyph's texture at a time, not left to right: the finish's "Press START
+        // to Continue" drew its i's and its e after the rest, and alone they were placed from the right side and
+        // "Press" from the left. So pieces of rectangles that lie near each other, whatever order they were drawn in,
+        // are placed as one, by the box of them all (a HUD makes a few dozen pieces; past a few hundred each is placed
+        // alone, as the join below is a pass over every pair).
+        for (int p = 0; p < pieces; p++) {
+            g_group[p] = p;
+            g_group_box[p] = g_pieces[p].box;
         }
-        return p;
-    };
-    for (bool joined = pieces <= 256; joined;) {
-        joined = false;
-        for (int a = 0; a < pieces; a++) {
-            for (int b = a + 1; b < pieces; b++) {
-                const int ra = root(a), rb = root(b);
-                if (ra == rb || g_pieces[a].models || g_pieces[b].models || !g_group_box[ra].near(g_group_box[rb])) {
-                    continue;
+        auto root = [](int p) {
+            while (g_group[p] != p) {
+                p = g_group[p] = g_group[g_group[p]];
+            }
+            return p;
+        };
+        for (bool joined = pieces <= 256; joined;) {
+            joined = false;
+            for (int a = 0; a < pieces; a++) {
+                for (int b = a + 1; b < pieces; b++) {
+                    const int ra = root(a), rb = root(b);
+                    if (ra == rb || g_pieces[a].models || g_pieces[b].models ||
+                        !g_group_box[ra].near(g_group_box[rb])) {
+                        continue;
+                    }
+                    g_group[rb] = ra;
+                    g_group_box[ra].add(g_group_box[rb]);
+                    joined = true;
                 }
-                g_group[rb] = ra;
-                g_group_box[ra].add(g_group_box[rb]);
-                joined = true;
             }
         }
-    }
-    for (int p = 0; p < pieces; p++) {
-        Piece& piece = g_pieces[p];
-        const Box& box = g_group_box[root(p)];
-        float middle = (box.x0 + box.x1) * 0.5f;
-        bool across = box.x0 < SCREEN_MIDDLE && box.x1 > SCREEN_MIDDLE;
-        if (across || (middle > SCREEN_MIDDLE - MIDDLE_ZONE && middle < SCREEN_MIDDLE + MIDDLE_ZONE)) {
-            piece.origin = G_EX_ORIGIN_NONE;
-        }
-        else {
-            piece.origin = middle < SCREEN_MIDDLE ? G_EX_ORIGIN_LEFT : G_EX_ORIGIN_RIGHT;
+        for (int p = 0; p < pieces; p++) {
+            Piece& piece = g_pieces[p];
+            const Box& box = g_group_box[root(p)];
+            float middle = (box.x0 + box.x1) * 0.5f;
+            bool across = box.x0 < SCREEN_MIDDLE && box.x1 > SCREEN_MIDDLE;
+            if (across || (middle > SCREEN_MIDDLE - MIDDLE_ZONE && middle < SCREEN_MIDDLE + MIDDLE_ZONE)) {
+                piece.origin = G_EX_ORIGIN_NONE;
+            }
+            else {
+                piece.origin = middle < SCREEN_MIDDLE ? G_EX_ORIGIN_LEFT : G_EX_ORIGIN_RIGHT;
+            }
         }
     }
 
@@ -557,6 +610,27 @@ void anchor(uint32_t start, uint32_t end) {
         if (op == G_MOVEMEM && (cmd.w0 & 0xFF) == G_MV_VIEWPORT) {
             viewport_w1 = cmd.w1;
         }
+        // An intro's rectangle cut in two (intro_origin): the part left of the cut placed from the left side, the rest
+        // from there to the right side, its texture moved with it. Its texture coordinates are the next command's
+        // (G_RDPHALF_1: s, 10.5 fixed point), its steps the one after (G_RDPHALF_2: dsdx, 5.10).
+        if (cmd.split != 0 && i + 2 < count && (g_cmds[i + 1].w0 >> 24) == G_RDPHALF_1 &&
+            (g_cmds[i + 2].w0 >> 24) == G_RDPHALF_2) {
+            const uint32_t ulx = (cmd.w1 >> 12) & 0xFFF;
+            const Cmd& half1 = g_cmds[i + 1];
+            const Cmd& half2 = g_cmds[i + 2];
+            out.put((cmd.w0 & ~(0xFFFu << 12)) | (cmd.split << 12), cmd.w1);
+            out.put(half1.w0, half1.w1);
+            out.put(half2.w0, half2.w1);
+            gEXSetRectAlign(c, G_EX_ORIGIN_LEFT, G_EX_ORIGIN_RIGHT, 0, 0, -SCREEN_WIDTH * 4, 0);
+            out.put(c, 2);
+            const int32_t s = int16_t(half1.w1 >> 16) + int32_t(cmd.split - ulx) * int16_t(half2.w1 >> 16) / 128;
+            out.put(cmd.w0, (cmd.w1 & ~(0xFFFu << 12)) | (cmd.split << 12));
+            out.put(half1.w0, (uint32_t(uint16_t(s)) << 16) | (half1.w1 & 0xFFFF));
+            out.put(half2.w0, half2.w1);
+            rect_align(out, rect_origin);
+            i += 2;
+            continue;
+        }
         if (op == G_TEXRECT && !sc_wide && i + 2 < count) {
             spanning_rect_from_left(cmd, g_cmds[i + 1], g_cmds[i + 2], sc_ulx, sc_lrx);
         }
@@ -614,4 +688,40 @@ extern "C" void eb_hud_end(uint8_t* rdram, uint32_t gdl) {
     g_open = false;
     g_rdram = rdram;
     anchor(g_start, gdl);
+}
+
+// Before render_draw_race's call to hud_draw_track_intro, with gdl ($fp there), once src/game/widescreen.cpp's
+// eb_intro_rect has put the game's own one-player view in place, which the intro lays itself out by (gViewRects' first).
+extern "C" void eb_intro_begin(uint8_t* rdram, uint32_t gdl) {
+    g_rdram = rdram;
+    g_open = false;
+    const int width = int(rd_w(EB_SCREEN_WIDTH)), height = int(rd_w(EB_SCREEN_HEIGHT));
+    if ((width != 512 && width != 640) || height <= 0) {
+        return;
+    }
+    SCREEN_WIDTH = width;
+    SCREEN_MIDDLE = width / 2;
+    const float vx = float(int32_t(rd_w(EB_VIEW_RECTS))), vy = float(int32_t(rd_w(EB_VIEW_RECTS + 4)));
+    const float vw = float(int32_t(rd_w(EB_VIEW_RECTS + 8))), vh = float(int32_t(rd_w(EB_VIEW_RECTS + 12)));
+    // At 512x240 (the view 20, 16, 472, 208): the round cards' column from 328, the top bar down to 43 and the bottom
+    // panel from 186.
+    const float sx = float(width) / 512.0f, sy = float(height) / 240.0f;
+    g_intro.cards = vx + vw - 170.0f * sx;
+    g_intro.top = vy + 40.0f * sy;
+    g_intro.panel = vy + vh - 40.0f * sy;
+    g_intro.season = rd_w(EB_GAME_MODE) == 1;
+    g_start = gdl;
+    g_open = true;
+}
+
+// After it, with the gdl it returned ($v0 there).
+extern "C" void eb_intro_end(uint8_t* rdram, uint32_t gdl) {
+    if (!g_open) {
+        return;
+    }
+    g_open = false;
+    g_rdram = rdram;
+    g_intro.on = true;
+    anchor(g_start, gdl);
+    g_intro.on = false;
 }
