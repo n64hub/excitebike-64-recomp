@@ -1,1 +1,0 @@
-- In a window wider than 4:3, the other riders stay drawn out to the window's sides instead of vanishing past the 4:3 frame's edges, and so does the place marker over the rider one place ahead (#32)
