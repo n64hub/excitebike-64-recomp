@@ -265,9 +265,10 @@ float eb::window_wide() {
 
 // How far past each side of the screen the race's view `view` shows in the window, in the screen's pixels: for a view
 // RT64 widens to the window, half the screen's width times how much wider than 4:3 the window is, less the screen;
-// none for the others. patches/particles.c's particles_draw draws the particles that far out ($a0 the view, $v0 the
+// none for the others. patches/particles.c's particles_draw draws the particles that far out, and patches/riders.c's
+// render_get_rider_lod and render_draw_place_markers the riders and the markers over them ($a0 the view, $v0 the
 // pixels).
-extern "C" void eb_particle_margin(uint8_t* rdram, recomp_context* ctx) {
+extern "C" void eb_view_margin(uint8_t* rdram, recomp_context* ctx) {
     const int32_t view = (int32_t)ctx->r4;
     int32_t margin = 0;
     if (eb::view_widened(rdram, view)) {
