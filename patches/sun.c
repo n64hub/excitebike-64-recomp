@@ -7,7 +7,7 @@
 // the screen.
 //
 // So for the view RT64 widens to the window (one player's: the lights are drawn with one screen only), the bound
-// reaches as far past each side as the window shows, eb_particle_margin's pixels of the screen
+// reaches as far past each side as the window shows, eb_view_margin's pixels of the screen
 // (src/game/widescreen.cpp); the glows are drawn under an extended scissor as far out, the view's own rows high, the
 // game's put back after them; and a rectangle glow is RT64's gEXTextureRectangle, whose coordinates are signed 16
 // bits, at the same place and size. With no margin (Original, a window no wider than 4:3) all three are the game's own.
@@ -51,7 +51,7 @@ typedef struct ViewRect {
 } ViewRect;
 
 // How far past each side of the screen view `view` shows in the window, in the screen's pixels (widescreen.cpp).
-s32 eb_particle_margin(s32 view);
+s32 eb_view_margin(s32 view);
 
 RECOMP_PATCH void sun_update_screen_pos(s32 dyn, s32 view, s32 fb) {
     s32 sx, sy, sz, depth, depth2;
@@ -61,7 +61,7 @@ RECOMP_PATCH void sun_update_screen_pos(s32 dyn, s32 view, s32 fb) {
     s32 margin;
 
     if (sSunList != NULL) {
-        margin = eb_particle_margin(view);
+        margin = eb_view_margin(view);
         for (i = 0; i < sSunList->count; i++) {
             flare = &sSunList->e[i];
             flags = flare->flags;
@@ -125,7 +125,7 @@ RECOMP_PATCH Gfx *sun_draw_flare(Gfx *gdl, u8 *dyn, s32 fb) {
         return gdl;
     }
 
-    margin = eb_particle_margin(0);
+    margin = eb_view_margin(0);
     rect = &gViewRects[0][0];
     gDPPipeSync(gdl++);
     gDPSetTextureLUT(gdl++, G_TT_NONE);
