@@ -26,6 +26,8 @@
 # too (the first race's intro a view 1.6 s in a row at 16:9 that the 4:3 run never showed). And the title is left
 # out of where the HUD sits (`unchecked hud`): its logo stays in the middle at 4:3 in every window over its attract
 # race, which widens, as a HUD left at 4:3 would.
+# The main menu's hold is left out of the middle as well: its sponsor logos are placed by the window's width, so each
+# run's logos cross the 4:3 middle at their own places and times.
 # The track editor is left out of it too: its menu panel moves out to the window's left, but the 3D view beside it
 # holds still between the camera's moves, so the check finds pixels fixed all along the way the panel goes (98% at
 # its 4:3 place at 16:9, with no place out from it of its own) and reads it as a HUD left at 4:3. The replay, the
@@ -57,11 +59,13 @@
 17 shot 04_title_race
 17 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30 Enter
 17 checked hud
+18 unchecked middle
 18.5 shot 05_main_menu
 28.5 shot 05_main_menu_10
 38.5 shot 05_main_menu_20
 47.5 shot 05_main_menu_29
 48 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 2
+48 checked middle
 
 # Exhibition on Mountain Quarry: the difficulty, the track lists turned to Silver and back, the players' count, Rider
 # Select, the track's flyover and countdown, a stretch of racing, the pause menu and Quit.
