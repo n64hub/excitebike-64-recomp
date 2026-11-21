@@ -166,6 +166,19 @@ void eb::widen_views(uint8_t* rdram) {
     }
 }
 
+// The game's own view and the full one, in pixels, of the view whose box (the rectangle the HUD reads) is `box`, in
+// pixels: src/game/checkerboard.cpp draws the finish's checkerboard by the first over the second.
+bool eb::view_of_box(uint8_t* rdram, const int32_t box[4], int32_t game[4], int32_t full[4]) {
+    const View* v = box_view(rdram, { box[0], box[1], box[2], box[3] }, true);
+    if (!v) {
+        return false;
+    }
+    const Rect g = pixels(rdram, v->game), f = pixels(rdram, v->full);
+    game[0] = g.x, game[1] = g.y, game[2] = g.w, game[3] = g.h;
+    full[0] = f.x, full[1] = f.y, full[2] = f.w, full[3] = f.h;
+    return true;
+}
+
 // The full views (full) or the game's boxes in place, in the layouts and the views' rectangles: us.toml's hooks at
 // render_draw_race's start and render_update_viewports' (full), and after render_draw_race's riders (boxes).
 extern "C" void eb_view_rects(uint8_t* rdram, int32_t full) {
