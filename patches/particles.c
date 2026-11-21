@@ -13,8 +13,16 @@
 
 #include "patches.h"
 
-#include "game.h"
+// The decomp's types and constants, without its prototypes and globals (functions.h declares __osMotorAccess as
+// ultralib's doesn't): the three functions this calls are declared here, the globals defined below.
+#include "common.h"
+#include "constants.h"
+#include "structs.h"
 #include "rt64_extended_gbi.h"
+
+void mtx3i_from_angles(s32 *m, s32 ax, s32 ay, s32 az);
+void vec3i_mul_mtx3i(s32 *v, s32 *m, s32 *out);
+s32 project_to_screen(s32 x, s32 y, s32 z, s32 *sx, s32 *sy, s32 *sz, s32 *w, s32 mtx, s32 view);
 
 // The game's data by address (the decomp's versions/us_rev1/symbols.txt), most of it past the image syms/'s data
 // symbols end at.
@@ -241,7 +249,7 @@ RECOMP_PATCH Gfx *particles_draw(Gfx *gdl, s32 view, s32 dyn) {
             if (grow < 0) {
                 grow = 0;
             }
-            if (grow >= sExhaustTextures->count) {
+            if ((u32)grow >= sExhaustTextures->count) {
                 grow = sExhaustTextures->count - 1;
             }
             gDPLoadTextureBlock(gdl++, sExhaustTextures->tex[grow].data, G_IM_FMT_IA, G_IM_SIZ_8b, sExhaustTextures->tex[grow].width * 8,
