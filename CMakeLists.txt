@@ -112,6 +112,14 @@ set(RT64_SCISSOR_INSIDE_FRAMEBUFFER ON)
 # reject by. RT64 takes Rej for NoN there only with RT64_REJ_WITHOUT_NEAR_CLIP (off on a desktop build and on with
 # Emscripten): without it every shadow texture stayed empty, and the ground drew no shadow under any bike.
 set(RT64_REJ_WITHOUT_NEAR_CLIP ON)
+# The game draws each section of a track with a matrix of its own that holds the camera, fogged under one render mode
+# past a distance and plain under another nearer (lib/excitebike64's src/game/tubegfx.c), so RT64 left a section that
+# crossed that distance, or came into view at the picture's side, unpaired, and drew it where it stood in the frames
+# between while the next one moved: a light line across the track and up the canyon walls on Mountain Quarry.
+# RT64_MOVE_UNPAIRED_WITH_CAMERA (off on a desktop build and on with Emscripten) draws it as holding still in the world,
+# moved back by the step the race's paired sections agree on: in frame dumps of 70 s of that race, frames between with a
+# new thin line of the sky's colour went from 45 to none.
+set(RT64_MOVE_UNPAIRED_WITH_CAMERA ON)
 # Up to four players, each a port of their own (src/main/main.cpp, get_connected_device_info): the game turns
 # RecompFrontend's single-player mode off, and plays as single-player mode until players are assigned, as with
 # Emscripten, so a player alone needn't assign their pad or keyboard first. And until then each pad plays a port of its
