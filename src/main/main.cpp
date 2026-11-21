@@ -606,13 +606,16 @@ int main(int argc, char** argv) {
     // flare, and to find the lowest row the sky shows down to (sky_scan_zbuffer, which patches/sky.c keeps at the
     // whole view for a wide window's sides). Without the copy it read whatever the load had left there: a stadium's
     // lights glowed through the hills in front of them, and only some flared. A frame one list old is what it needs,
-    // so the copy lands late and no list waits for the GPU (N64Recomp-browser's docs/findings.md). The game also uses the framebuffer it isn't drawing as scratch memory as a race loads
-    // (tubegfx.c's tube_build_dlists copies a track's models there): the late copy keeps every word the CPU wrote after
-    // the list ended.
+    // so the copy lands late and no list waits for the GPU (N64Recomp-browser's docs/findings.md), and it is the Z
+    // buffer alone: the game never reads its frames, and in a browser each framebuffer copied is a readback of its
+    // own, which at a large canvas cost Chrome's page a quarter of its presents. The game also uses the framebuffer
+    // it isn't drawing as scratch memory as a race loads (tubegfx.c's tube_build_dlists copies a track's models
+    // there), which no copy writes over now.
     ultramodern::renderer::callbacks_t renderer_callbacks{
         .create_render_context = [](uint8_t* rdram, ultramodern::renderer::WindowHandle window_handle, bool developer_mode) {
             recompui::renderer::set_render_to_ram(true);
             recompui::renderer::set_render_to_ram_late(true);
+            recompui::renderer::set_render_to_ram_late_depth_only(true);
             return recompui::renderer::create_render_context(rdram, window_handle, ultramodern::renderer::PresentationMode::SkipBuffering, developer_mode);
         },
     };
