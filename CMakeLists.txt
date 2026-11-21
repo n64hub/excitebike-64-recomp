@@ -107,6 +107,11 @@ set(RT64_HASH_FILLED_FRAMEBUFFERS ON)
 # under a scissor as wide as the window (src/game/menu_logo.cpp), and without it the menu's frame and items were drawn
 # stretched to the window's width.
 set(RT64_SCISSOR_INSIDE_FRAMEBUFFER ON)
+# The game draws each rider from above into its shadow texture under F3DLX2.Rej (lib/excitebike64's src/game/shadow.c),
+# through a projection that puts all of it past the near plane, which a Rej microcode draws, having no near plane to
+# reject by. RT64 takes Rej for NoN there only with RT64_REJ_WITHOUT_NEAR_CLIP (off on a desktop build and on with
+# Emscripten): without it every shadow texture stayed empty, and the ground drew no shadow under any bike.
+set(RT64_REJ_WITHOUT_NEAR_CLIP ON)
 # Up to four players, each a port of their own (src/main/main.cpp, get_connected_device_info): the game turns
 # RecompFrontend's single-player mode off, and plays as single-player mode until players are assigned, as with
 # Emscripten, so a player alone needn't assign their pad or keyboard first. And until then each pad plays a port of its
