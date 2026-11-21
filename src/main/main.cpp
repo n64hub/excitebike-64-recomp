@@ -373,14 +373,14 @@ std::vector<recomp::GameEntry> supported_games = {
         .mod_game_id = "eb64",
         // The cartridge's 16 Kbit EEPROM: the records, the season, the options and the user track.
         .save_type = recomp::SaveType::Eep16k,
-        .thumbnail_bytes = std::span<const char>(icon_bytes),
-        .is_enabled = true,
-        .entrypoint_address = get_entrypoint_address(),
-        .entrypoint = eb_entrypoint,
         // A Controller Pak in port 1, for the Time Trial ghosts and the tracks a player copies there:
         // saves/controllerpak_1.mpk (the runtime's librecomp/src/pak.cpp). Its Rumble Pak stays beside it
         // (src/game/rumble_pak.cpp).
         .controller_pak_ports = 0b0001,
+        .thumbnail_bytes = std::span<const char>(icon_bytes),
+        .is_enabled = true,
+        .entrypoint_address = get_entrypoint_address(),
+        .entrypoint = eb_entrypoint,
     },
 };
 
