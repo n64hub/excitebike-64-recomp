@@ -1,0 +1,1 @@
+- Fixed the Time and Total digits during a race stretching, sliding or splitting into thin vertical lines in the frames drawn between the game's own, as on the Stunt Course (#38)
