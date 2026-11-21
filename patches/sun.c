@@ -25,7 +25,7 @@
 
 s32 project_to_screen(s32 x, s32 y, s32 z, s32 *sx, s32 *sy, s32 *sz, s32 *w, s32 mtx, s32 view);
 s32 sky_get_sun_screen_pos(s32 *outx, s32 *outy, s32 mtx, s32 view);
-s32 isqrt_u32_2(u32 r);
+s32 isqrt_u32(u32 r); // the decomp's isqrt_u32_2: syms/ names it isqrt_u32
 
 // The game's data by address (the decomp's versions/us_rev1/symbols.txt).
 #define gCheatFlags (*(s32 *)0x800C2BC0)
@@ -151,7 +151,7 @@ RECOMP_PATCH Gfx *sun_draw_flare(Gfx *gdl, u8 *dyn, s32 fb) {
         if (flare->flags & FLARE_ON_SCREEN) { if (flare->flags & FLARE_SAMPLED) { if (flare->visible >= 0) {
             stepX = gScreenWidth / 2 - flare->sx;
             stepY = gScreenHeight / 2 - flare->sy;
-            alpha = 0x80 - isqrt_u32_2(stepX * stepX + stepY * stepY);
+            alpha = 0x80 - isqrt_u32(stepX * stepX + stepY * stepY);
             if (alpha >= 0) {
                 alpha = alpha * flare->visible / 6;
                 if (alpha != 0) {
