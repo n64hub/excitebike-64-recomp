@@ -5,3 +5,4 @@ __start = 0x80000000;
 osRecvMesg_recomp = 0x8F000004;
 osEPiStartDma_recomp = 0x8F000008;
 eb_particle_margin = 0x8F00000C;
+eb_desert_cull_scale = 0x8F000010;
