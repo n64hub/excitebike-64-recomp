@@ -23,6 +23,8 @@
 // over a race, read the game's boxes (eb_view_rects writes one or the other over gViewLayouts, sViewLayoutsMulti and
 // gViewRects; render_update_viewports, hooked at its start too, makes the full ones). The game's box for one player
 // and two one above the other is its width already widened to the screen's, as src/game/hud.cpp places their HUD. The
+// track's intro reads the game's own one-player view instead (eb_intro_rect): it places its frames from that view's
+// sides and its text from the screen's middle, so it is laid out as on the console, in the middle of the window. The
 // sky's backdrop is drawn down to sSkyClipHeight, which sky_scan_zbuffer sets after each frame from the depth buffer
 // and the views' rectangles, on the scheduler's thread, where the game's boxes may be in place: it is set to each
 // view's full height as the 3D starts, the backdrop drawn behind the whole view as on the stadium's tracks.
@@ -195,6 +197,21 @@ extern "C" void eb_view_rects(uint8_t* rdram, int32_t full) {
         const int32_t n = MEM_W(0, num_views);
         for (int32_t view = 0; (n >= 1) && (n <= 4) && (view < n); view++) {
             MEM_W(view * 4, sky_clip_height) = MEM_W(12, view_rects + (n - 1) * 64 + view * 16);
+        }
+    }
+}
+
+// The game's own one-player view (game) or its box back (us.toml's hooks on both sides of render_draw_race's call to
+// hud_draw_track_intro). The track's intro lays its frames out by the first of the views' rectangles (gViewRects_2):
+// its picture's and name's bar and its bottom panel from the view's left, the season's rounds from its right. Its text
+// is placed from the screen's middle, so in the box, 20 pixels wider at each side, the frames slid away from their
+// text, the best lap's initials and the laps out past the panel's right end.
+extern "C" void eb_intro_rect(uint8_t* rdram, int32_t game) {
+    const Rect r = read(rdram, view_rects);
+    for (const View* v : { &one_player, &one_player_hi_res }) {
+        if (r == pixels(rdram, game != 0 ? v->box : v->game)) {
+            write(rdram, view_rects, pixels(rdram, game != 0 ? v->game : v->box));
+            return;
         }
     }
 }
