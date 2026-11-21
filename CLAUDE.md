@@ -21,7 +21,7 @@ This repo is the game: its recompilation, the patches over it, the desktop build
   (`src/game/libultra.cpp`) and the Rumble Pak beside the Controller Pak (`src/game/rumble_pak.cpp`), the race's
   widescreen culling, HUD, sky and particles (`src/game/widescreen.cpp`, `src/game/hud.cpp`, `src/game/sky.cpp`,
   `patches/particles.c`), the main menu's sponsor logo across a wide window (`src/game/menu_logo.cpp`), the fades
-  across it too (`src/game/wipe.cpp`),
+  across it too (`src/game/wipe.cpp`), the General tab's Draw Distance (`src/game/draw_distance.cpp`),
   the boot's logos and notices kept at 4:3 in it (`src/game/splash.cpp`), the track editor out to its edges
   (`src/game/editor.cpp`), and a stack trace on a crash, on Windows and Linux (`src/main/crash_trace.cpp`).
 - `lib/`: `excitebike64` (the decomp, for `syms/` and the patches' headers), `ultralib` (the libultra the decomp builds

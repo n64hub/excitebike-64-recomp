@@ -202,6 +202,14 @@ func = "render_draw_race"
 before_vram = 0x80006BFC
 text = "{ void eb_view_rects(uint8_t*, int32_t); eb_view_rects(rdram, 0); }"
 
+# The General tab's Draw Distance (src/game/draw_distance.cpp): in arn_cull_models, once it has loaded the distances
+# past which a stadium model is fogged (its stack's 0x54) and not drawn ($v1, which the branch's delay slot stores at
+# 0x58), eb_draw_distance raises both with Far.
+[[patches.hook]]
+func = "arn_cull_models"
+before_vram = 0x80024000
+text = "{ void eb_draw_distance(uint8_t*, recomp_context*); eb_draw_distance(rdram, ctx); }"
+
 # The race's culling widened with its view and the picture (src/game/widescreen.cpp's eb_cull_scale, 1 where the game's
 # view is kept): in arn_cull_models the half-width a stadium model's centre may lie across, half its depth ahead (and
 # half again with two screens one above the other), in $a0 where every path compares it with the centre's side; in
