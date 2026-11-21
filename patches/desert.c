@@ -2,18 +2,20 @@
 // patches of 5x5 vertices in three rings of detail round the camera (the decomp's src/game/desgfx.c, copied here as it
 // is but for the changes below). des_calc_lod_grid marks the cells of a 32x32 grid each ring draws, by where a cell
 // lies from the camera: ahead of it, and no further across than half its distance ahead, plus 360 units (22.5 m) for
-// the finest ring and 720 for the coarser ones. That is the 4:3 view's width, so in a wider one the dunes past it were
-// never drawn and the sky showed where they should be, with the cacti and rocks (fractal_get_visible_objects, which
-// lets through 90 degrees, as far across as ahead) still standing over it.
+// the finest ring and 720 for the coarser ones, room for a cell's own size and for the ground the view sees below the
+// camera close to it. That is the 4:3 view's width, so in a wider one the dunes past it were never drawn and the sky
+// showed where they should be, with the cacti and rocks (fractal_get_visible_objects, which lets through 90 degrees, as
+// far across as ahead) still standing over it.
 //
-// So the half-width is widened as the stadium's and the outdoor tracks' are (src/game/widescreen.cpp's eb_cull_scale,
-// by the view's width over the game's and, with Aspect Ratio Expand, the window's aspect ratio over 4:3), which
-// eb_desert_cull_scale gives in 1024ths.
+// So the half-width, both its slope and its room, is widened as the stadium's and the outdoor tracks' are
+// (src/game/widescreen.cpp's eb_cull_scale, by the view's width over the game's and, with Aspect Ratio Expand, the
+// window's aspect ratio over 4:3), which eb_desert_cull_scale gives in 1024ths. With the slope alone, a 32:9 window
+// still showed sky in its bottom corners, where the ground is close to the camera.
 //
 // A wider view needs more patches than the game keeps. des_update_patches takes each cell's patch from a cache of 250
 // (DES_NUM_PATCHES), and one not used for a frame is freed only the frame after, so a turning view holds two frames'
 // worth. Counted by des_calc_lod_grid's own rules over 3000 places and headings, turning 0x600 and moving 1400 units
-// a frame: 182 at 4:3, 239 at 16:9, 294 at 21:9, 405 at 32:9, and 714 with every cell ahead of the camera, however
+// a frame: 182 at 4:3, 256 at 16:9, 325 at 21:9, 479 at 32:9, and 704 with every cell ahead of the camera, however
 // wide. Once the cache is used up the game stops taking patches, the coarser rings last, so the far dunes went first.
 // So des_init takes a cache of 768 (DES_POOL_SIZE) from the game's heap, which the front end's code is given back to
 // during a race, and the game's 250 if the heap hasn't room; des_update_view and des_update_patches use what it took.
@@ -223,8 +225,10 @@ RECOMP_PATCH void des_calc_lod_grid(void) {
     s32 x, z, side, ahead;
     s32 cosYaw, sinYaw, yaw;
     s32 cell = 4000;
-    // The half-width's widening, in 1024ths: 1024 the game's own.
+    // The half-width's widening, in 1024ths (1024 the game's own), and its room for each ring widened with it.
     s32 scale = eb_desert_cull_scale();
+    s32 room0 = (360 * scale) >> 10;
+    s32 room1 = (720 * scale) >> 10;
 
     camX = sDesCamX >> 4;
     camZ = sDesCamZ >> 4;
@@ -266,11 +270,11 @@ RECOMP_PATCH void des_calc_lod_grid(void) {
                 // Half as far across as ahead, widened with the view (ahead isn't negative here).
                 ahead = ((ahead / 2) * scale) >> 10;
                 if (side < 0) {
-                    if (side + 360 < -ahead) G[idx] &= 0xFE;
-                    if (side + 720 < -ahead) G[idx] &= 0xF1;
+                    if (side + room0 < -ahead) G[idx] &= 0xFE;
+                    if (side + room1 < -ahead) G[idx] &= 0xF1;
                 } else {
-                    if (ahead < side - 360) G[idx] &= 0xFE;
-                    if (ahead < side - 720) G[idx] &= 0xF1;
+                    if (ahead < side - room0) G[idx] &= 0xFE;
+                    if (ahead < side - room1) G[idx] &= 0xF1;
                 }
             }
             idx++;
