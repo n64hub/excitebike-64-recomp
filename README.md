@@ -18,7 +18,7 @@ git or CI is made from one except the symbol names and addresses in `syms/`.
 drawn as its page's shader list was recorded), Exhibition races of up to four players in a split screen, each on a
 controller of their own with its Rumble Pak, and the pause menu, with sound. The season and the settings are kept in
 the cartridge's EEPROM across a restart. On a window wider than 4:3, one player's race and two players' one above the
-other reach the window's edges, sky and all, the HUD at its sides, and so does the track editor, its menu at the
+other reach the window's edges, sky, dust and spray and all, the HUD at its sides, and so does the track editor, its menu at the
 window's left (at 4:3 too, without the console's border); side by side, three or four players and the menus stay 4:3 in
 the middle, the menus' backdrop and its sponsor logo reaching the edges, and every fade to black covers the whole
 window. In every window, 4:3 included, each race view fills its part of the screen from top to bottom, without the
