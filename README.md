@@ -22,9 +22,9 @@ other reach the window's edges, sky, dust and spray and all, the HUD at its side
 window's left (at 4:3 too, without the console's border); side by side, three or four players and the menus stay 4:3 in
 the middle, the menus' backdrop and its sponsor logo reaching the edges, and every fade to black covers the whole
 window. In every window, 4:3 included, each race view fills its part of the screen from top to bottom, without the
-black border the console drew round it (which a TV's edge hid), the HUD where the game puts it. Not played yet: saving
-a custom track and racing it (the editor opens, lays track and moves it), and time trials' ghosts, which the game
-keeps on a Controller Pak that the runtime says isn't there.
+black border the console drew round it (which a TV's edge hid), the HUD where the game puts it. Time trials' ghosts are
+kept on a Controller Pak in port 1, `saves/controllerpak_1.mpk`, beside its Rumble Pak. Not played yet: saving a custom
+track and racing it (the editor opens, lays track and moves it).
 
 It plays in a browser too, at [n64hub.com/excitebike-64](https://n64hub.com/excitebike-64/) (`docs/web.md`), and the
 desktop builds for Windows and Linux are on the [Releases](https://github.com/n64hub/excitebike-64-recomp/releases)

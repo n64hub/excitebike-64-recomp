@@ -308,3 +308,15 @@ text = "{ void eb_splash_begin(uint8_t*, uint32_t, uint32_t); eb_splash_begin(rd
 func = "shell_draw"
 before_vram = 0x80088488
 text = "{ void eb_splash_end(uint8_t*, uint32_t); eb_splash_end(rdram, (uint32_t)ctx->r2); }"
+
+# The Rumble Pak beside the Controller Pak (src/game/rumble_pak.cpp): after each probe's osPfsInitPak call, in
+# pak_probe_port and pak_probe_all, its answer in $v0 and the port in $s1.
+[[patches.hook]]
+func = "pak_probe_port"
+before_vram = 0x8008C3C0
+text = "{ void eb_pak_probed(uint8_t*, int32_t, int32_t); eb_pak_probed(rdram, (int32_t)ctx->r2, (int32_t)ctx->r17); }"
+
+[[patches.hook]]
+func = "pak_probe_all"
+before_vram = 0x8008C63C
+text = "{ void eb_pak_probed(uint8_t*, int32_t, int32_t); eb_pak_probed(rdram, (int32_t)ctx->r2, (int32_t)ctx->r17); }"

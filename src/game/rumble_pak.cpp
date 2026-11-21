@@ -1,65 +1,39 @@
-// The Rumble Pak as the game finds it. The game probes each port with osPfsInitPak at boot and after its Controller Pak
-// screen (pak.c's pak_probe_all), and starts a port's rumble with osMotorInit only when that probe fails as it does on
-// a Rumble Pak: libultra's check of a Controller Pak's ID area reads back nothing it wrote there and answers
-// PFS_ERR_DEVICE. N64ModernRuntime's osPfsInitPak (librecomp/src/pak.cpp) answers PFS_ERR_NOPACK for every port, so
-// the game would never rumble. This file defines every function pak.cpp does, so the linker uses these and never pulls
-// that object in: osPfsInitPak answers PFS_ERR_DEVICE for a port whose controller has a Rumble Pak
-// (get_connected_device_info, src/main/main.cpp) and PFS_ERR_NOPACK for the others, and the rest answer
-// PFS_ERR_NOPACK, as pak.cpp's do, since no Controller Pak is plugged in.
+// The Rumble Pak beside the Controller Pak. Port 1 holds a Controller Pak, the runtime's (librecomp/src/pak.cpp, turned
+// on by the GameEntry's controller_pak_ports in src/main/main.cpp), for the Time Trial ghosts and the tracks a player
+// copies there. The game probes each port with osPfsInitPak at boot and after its Controller Pak screen (pak.c's
+// pak_probe_all and pak_probe_port), and starts a port's rumble with osMotorInit only when that probe fails as it does
+// on a Rumble Pak (PFS_ERR_DEVICE or PFS_ERR_ID_FATAL), as a console's port holds one or the other. The runtime answers
+// PFS_ERR_NOPACK in a port without a Controller Pak, so the game would never rumble.
+//
+// Two hooks in us.toml, on the instruction after each probe's osPfsInitPak call, run eb_pak_probed with its answer and
+// the port: a port with a Controller Pak or none gets the Rumble Pak too when its controller has one
+// (get_connected_device_info, src/main/main.cpp), started as the game starts it (osMotorInit into gRumblePfs[port],
+// the motor stopped, the port's bit in gRumblePakMask). Both probes clear that bit before they call osPfsInitPak and
+// set no bit after an answer of 0 or PFS_ERR_NOPACK, so the bit stays. The game's rumble reads only gRumblePakMask and
+// gRumblePfs, and its Controller Pak code only sPakValidMask and sPakFs, so each pak works as it does alone.
 #include <cstdint>
 
-#include "ultramodern/input.hpp"
+#include "ultramodern/ultra64.h"
 
 #include "recomp.h"
 
-static constexpr int32_t PFS_ERR_NOPACK = 1;
-static constexpr int32_t PFS_ERR_DEVICE = 11;
-
-ultramodern::input::connected_device_info_t get_connected_device_info(int controller_num);
-
-// s32 osPfsInitPak(OSMesgQueue* mq, OSPfs* pfs, int channel)
-extern "C" void osPfsInitPak_recomp(uint8_t* rdram, recomp_context* ctx) {
-    const auto info = get_connected_device_info((int)ctx->r6);
-    const bool rumble = info.connected_device == ultramodern::input::Device::Controller &&
-        info.connected_pak == ultramodern::input::Pak::RumblePak;
-    ctx->r2 = rumble ? PFS_ERR_DEVICE : PFS_ERR_NOPACK;
+namespace {
+// pak.c's data, USA Rev 1 (the decomp's versions/us_rev1/symbols.txt).
+constexpr int32_t gSiMesgQueue = (int32_t)0x800E2568;
+constexpr int32_t gRumblePakMask = (int32_t)0x800E2580;
+constexpr int32_t gRumblePfs = (int32_t)0x800E2780;
+constexpr int32_t sizeof_OSPfs = 0x68;
+constexpr int32_t PFS_ERR_NOPACK = 1;
 }
 
-extern "C" void osPfsFreeBlocks_recomp(uint8_t* rdram, recomp_context* ctx) {
-    ctx->r2 = PFS_ERR_NOPACK;
-}
-
-extern "C" void osPfsAllocateFile_recomp(uint8_t* rdram, recomp_context* ctx) {
-    ctx->r2 = PFS_ERR_NOPACK;
-}
-
-extern "C" void osPfsDeleteFile_recomp(uint8_t* rdram, recomp_context* ctx) {
-    ctx->r2 = PFS_ERR_NOPACK;
-}
-
-extern "C" void osPfsFileState_recomp(uint8_t* rdram, recomp_context* ctx) {
-    ctx->r2 = PFS_ERR_NOPACK;
-}
-
-extern "C" void osPfsFindFile_recomp(uint8_t* rdram, recomp_context* ctx) {
-    ctx->r2 = PFS_ERR_NOPACK;
-}
-
-extern "C" void osPfsReadWriteFile_recomp(uint8_t* rdram, recomp_context* ctx) {
-    ctx->r2 = PFS_ERR_NOPACK;
-}
-
-extern "C" void osPfsChecker_recomp(uint8_t* rdram, recomp_context* ctx) {
-    ctx->r2 = PFS_ERR_NOPACK;
-}
-
-// s32 osPfsNumFiles(OSPfs* pfs, s32* max_files, s32* files_used)
-extern "C" void osPfsNumFiles_recomp(uint8_t* rdram, recomp_context* ctx) {
-    MEM_W(0, ctx->r5) = 0;
-    MEM_W(0, ctx->r6) = 0;
-    ctx->r2 = PFS_ERR_NOPACK;
-}
-
-extern "C" void osPfsRepairId_recomp(uint8_t* rdram, recomp_context* ctx) {
-    ctx->r2 = PFS_ERR_NOPACK;
+extern "C" void eb_pak_probed(uint8_t* rdram, int32_t answer, int32_t port) {
+    if ((answer != 0 && answer != PFS_ERR_NOPACK) || port < 0 || port >= 4) {
+        return;
+    }
+    gpr pfs = (gpr)(gRumblePfs + port * sizeof_OSPfs);
+    if (osMotorInit(rdram, (gpr)gSiMesgQueue, pfs, port) != 0) {
+        return;
+    }
+    __osMotorAccess(rdram, pfs, 0); // MOTOR_STOP
+    MEM_W(0, (gpr)gRumblePakMask) = MEM_W(0, (gpr)gRumblePakMask) | (1 << port);
 }

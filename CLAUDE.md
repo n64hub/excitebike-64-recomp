@@ -18,7 +18,7 @@ This repo is the game: its recompilation, the patches over it, the desktop build
 - `src/`: RecompFrontend's main (`src/main/main.cpp`, with the GameEntry), the code section and patches it gives the
   runtime (`src/main/register_overlays.cpp`, `src/main/register_patches.cpp`), the game's start in place of its boot
   loader (`src/game/boot.cpp`), the settings (`src/game/config.cpp`), libultra functions the runtime leaves out
-  (`src/game/libultra.cpp`) and the Rumble Pak's answer to the game's probe (`src/game/rumble_pak.cpp`), the race's
+  (`src/game/libultra.cpp`) and the Rumble Pak beside the Controller Pak (`src/game/rumble_pak.cpp`), the race's
   widescreen culling, HUD, sky and particles (`src/game/widescreen.cpp`, `src/game/hud.cpp`, `src/game/sky.cpp`,
   `patches/particles.c`), the main menu's sponsor logo across a wide window (`src/game/menu_logo.cpp`), the fades
   across it too (`src/game/wipe.cpp`),
@@ -69,7 +69,8 @@ This repo is the game: its recompilation, the patches over it, the desktop build
   0xB70). Sound: none; the game mixes on the CPU and gives libultra's audio interface its buffers, paced by its FIFO
   full, which the runtime never sets: `main.cpp`'s `eb_ai_status` sets it for the game's two sound loops.
 - **Saves.** The cartridge's 16 Kbit EEPROM: `main.cpp` declares `SaveType::Eep16k`. The Controller Pak (time-trial
-  ghosts, user tracks) is the runtime's, which answers that none is plugged in.
+  ghosts, user tracks a player copies there) is the runtime's, in port 1 (`main.cpp`'s `controller_pak_ports`):
+  `saves/controllerpak_1.mpk`.
 - **Threads** (`main.cpp` names them): 0 libultra's PI and VI managers, 1 the idle thread and the scheduler (by
   priority), 3 the game's main at priority 10, 5 the scheduler's client.
 - **Scratch memory.** The game uses the framebuffer it isn't drawing and the Z buffer as scratch memory: a race's load
