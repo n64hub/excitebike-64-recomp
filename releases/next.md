@@ -1,0 +1,1 @@
+- The distant scenery behind each outdoor track (the jungle, mesas and hills above the horizon) turns with the camera as smoothly as the track in front of it, instead of sliding too far between the game's frames and stepping back (#41)

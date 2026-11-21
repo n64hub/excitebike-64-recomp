@@ -15,6 +15,20 @@
 // the window's right side; the image wraps (its tiles wrap 256 texels across), so it carries on past the screen as the
 // yaw turns. The first command the game wrote becomes a branch to the buffer, which branches back to where the game
 // goes on, as src/game/menu_logo.cpp does.
+//
+// And in every window the sky turns with the camera as smoothly as the track. sky_draw_strip draws each strip as two
+// copies of the image side by side, the second starting at the image's left edge where the first ends, a seam that
+// moves with the yaw, so both rectangles change width every frame. RT64_INTERPOLATE_RECT_SCROLLS pairs a rectangle with
+// the frame before's by its place, size and texels, and slid these the wrong way in the frames between: the backdrop
+// moved too far and stepped back at each of the game's own frames, against a track that moved evenly. So eb_sky_end
+// makes each pair one rectangle across the view, the first reaching the second's right side with the tile's wrap
+// (256 texels) carrying the image on past the seam, and the second's commands no-ops: its edges stay put, only its
+// texture scrolls, and RT64 slides that within the tile's period. And sky_update_scroll takes the yaw a 32nd at a
+// time (gCamYaw / 32, 256 steps to the image's width) and sky_draw_strip places the image at whole pixels of the
+// screen (sSkyScrollX * (view's width / 2) / sSkyScaleX, cut down), so the image moves 1 or 2 of the screen's pixels a
+// game frame, unevenly: eb_sky_end moves each strip's texture by what the two roundings cut off, from the yaw's own
+// low bits, its texture coordinate going back by that many pixels' worth of texels (s, s10.5, runs ds, s5.10, a
+// pixel).
 
 #include <cmath>
 #include <cstdint>
@@ -35,6 +49,10 @@ constexpr uint32_t G_SC_NON_INTERLACE = 0;
 constexpr gpr EB_SCREEN_WIDTH = (gpr)(int32_t)0x800F1D8C;  // gScreenWidth
 constexpr gpr EB_SCREEN_HEIGHT = (gpr)(int32_t)0x800F1D90; // gScreenHeight
 constexpr gpr EB_NUM_VIEWS = (gpr)(int32_t)0x800C2ED4;     // gNumViews
+constexpr gpr EB_MIRROR_MODE = (gpr)(int32_t)0x800C2CA4;   // gMirrorMode
+constexpr uint32_t EB_CAM_YAW = 0x800E89A0;                // gCamYaw[4]
+constexpr uint32_t EB_SKY_SCROLL_X = 0x800E9840;           // sSkyScrollX[4]
+constexpr uint32_t EB_SKY_SCALE_X = 0x800E9860;            // sSkyScaleX[4]
 constexpr uint32_t EB_VIEW_RECTS = 0x800E2038;             // gViewRects[4][4]: x, y, w, h each
 
 // Four buffers in turn past src/game/menu_logo.cpp's (0x80C40000, four of 0x1000), since the renderer may read a list
@@ -66,7 +84,7 @@ void wr(uint8_t* rdram, uint32_t addr, uint32_t value) {
 
 // Before the call to sky_draw (fill 0) or render_clear_viewports (fill 1), with gdl.
 extern "C" void eb_sky_begin(uint8_t* rdram, uint32_t gdl, int32_t fill) {
-    g_open = eb::window_wide() > 1.0f;
+    g_open = !fill || eb::window_wide() > 1.0f;
     g_fill = fill != 0;
     g_start = gdl;
     g_strips = 0;
@@ -98,6 +116,82 @@ extern "C" void eb_sky_end(uint8_t* rdram, uint32_t gdl) {
     if (screen <= 0 || views < 1 || views > 4) {
         return;
     }
+    // The view's left side and one past its right, in quarter pixels.
+    auto view_sides = [&](int32_t view, int32_t& left, int32_t& right) {
+        const uint32_t vr = EB_VIEW_RECTS + (uint32_t)(views - 1) * 64 + (uint32_t)view * 16;
+        left = (int32_t)rd(rdram, vr) * 4;
+        right = left + (int32_t)rd(rdram, vr + 8) * 4;
+    };
+    if (!g_fill) {
+        // Each view's strips go on by the pixels sky_update_scroll and sky_draw_strip cut off (above).
+        float frac[4] = {};
+        for (int32_t view = 0; view < views; view++) {
+            int32_t left, right;
+            view_sides(view, left, right);
+            const int32_t width = (right - left) / 4;
+            const int32_t scroll_x = (int32_t)rd(rdram, EB_SKY_SCROLL_X + (uint32_t)view * 4);
+            const int32_t scale_x = (int32_t)rd(rdram, EB_SKY_SCALE_X + (uint32_t)view * 4);
+            int32_t yaw = (int32_t)rd(rdram, EB_CAM_YAW + (uint32_t)view * 4) & 0x1FFF;
+            if (MEM_W(0, EB_MIRROR_MODE) != 0) {
+                yaw = 0x2000 - yaw;
+            }
+            if (scale_x > 0 && width > 0) {
+                const float exact = (float(scroll_x) + float(yaw & 31) / 32.0f) * float(width / 2) / float(scale_x);
+                frac[view] = exact - float(scroll_x * (width / 2) / scale_x);
+            }
+        }
+        int strip = -1;
+        for (uint32_t at = start; at + 24 <= gdl; at += 8) {
+            while (strip + 1 < g_strips && g_strip_at[strip + 1] <= at) {
+                strip++;
+            }
+            const int32_t view = strip >= 0 ? g_strip_view[strip] : -1;
+            if ((rd(rdram, at) >> 24) != G_TEXRECT || (rd(rdram, at + 8) >> 24) != G_RDPHALF_1 ||
+                (rd(rdram, at + 16) >> 24) != G_RDPHALF_2 || view < 0 || view >= views) {
+                continue;
+            }
+            const uint32_t st = rd(rdram, at + 12);
+            const int32_t ds = (int16_t)(rd(rdram, at + 20) >> 16);
+            const int32_t s = (int16_t)(st >> 16) - (int32_t)std::lround(frac[view] * float(ds) / 32.0f);
+            wr(rdram, at + 12, ((uint32_t)(s & 0xFFFF) << 16) | (st & 0xFFFF));
+            at += 16;
+        }
+        // Each pair of a strip's rectangles that meet at the image's seam becomes one: the first reaches the second's
+        // right side, the tile's wrap carrying the image on past the seam, and the second's commands become no-ops.
+        uint32_t first = 0;
+        for (uint32_t at = start; at + 24 <= gdl; at += 8) {
+            if ((rd(rdram, at) >> 24) != G_TEXRECT || (rd(rdram, at + 8) >> 24) != G_RDPHALF_1 ||
+                (rd(rdram, at + 16) >> 24) != G_RDPHALF_2) {
+                continue;
+            }
+            if (first != 0) {
+                const uint32_t a0 = rd(rdram, first), a1 = rd(rdram, first + 4);
+                const uint32_t b0 = rd(rdram, at), b1 = rd(rdram, at + 4);
+                const uint32_t a_st = rd(rdram, first + 12), b_st = rd(rdram, at + 12);
+                const uint32_t a_steps = rd(rdram, first + 20), b_steps = rd(rdram, at + 20);
+                const int32_t a_ulx = (a1 >> 12) & 0xFFF, a_lrx = (a0 >> 12) & 0xFFF, b_ulx = (b1 >> 12) & 0xFFF;
+                const int32_t ds = (int16_t)(a_steps >> 16);
+                // s (s10.5) at the second's left side, carried on from the first's, against the second's own.
+                const int32_t carried = (int32_t)(((int16_t)(a_st >> 16) + (int64_t)ds * (b_ulx - a_ulx) / 128) & 0x1FFF);
+                const int32_t off = (carried - (int32_t)((b_st >> 16) & 0x1FFF)) & 0x1FFF;
+                if ((a0 & 0xFFF) == (b0 & 0xFFF) && (a1 & 0x07000FFF) == (b1 & 0x07000FFF) && a_lrx == b_ulx &&
+                    (a_st & 0xFFFF) == (b_st & 0xFFFF) && a_steps == b_steps && (off <= 32 || off >= 0x2000 - 32)) {
+                    wr(rdram, first, (a0 & 0xFF000FFF) | (b0 & 0x00FFF000));
+                    for (uint32_t i = 0; i < 24; i += 4) {
+                        wr(rdram, at + i, 0);
+                    }
+                    first = 0;
+                    at += 16;
+                    continue;
+                }
+            }
+            first = at;
+            at += 16;
+        }
+        if (eb::window_wide() <= 1.0f) {
+            return;
+        }
+    }
     // The window's sides, in the screen's pixels: (wide - 1) / 2 screens past the screen's, a pixel further out.
     const int32_t margin = (int32_t)std::ceil(float(screen) * (eb::window_wide() - 1.0f) * 0.5f) + 1;
     const int32_t window_left = -margin, window_right = screen + margin;
@@ -127,12 +221,6 @@ extern "C" void eb_sky_end(uint8_t* rdram, uint32_t gdl) {
     put_cmds(c, 2);
     int strip = -1;
     int32_t fills = 0;
-    // The view's left side and one past its right, in quarter pixels.
-    auto view_sides = [&](int32_t view, int32_t& left, int32_t& right) {
-        const uint32_t vr = EB_VIEW_RECTS + (uint32_t)(views - 1) * 64 + (uint32_t)view * 16;
-        left = (int32_t)rd(rdram, vr) * 4;
-        right = left + (int32_t)rd(rdram, vr + 8) * 4;
-    };
     for (uint32_t at = start; at < gdl; at += 8) {
         while (strip + 1 < g_strips && g_strip_at[strip + 1] <= at) {
             strip++;
