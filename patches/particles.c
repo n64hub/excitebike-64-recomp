@@ -8,7 +8,7 @@
 // cloud drawn across the old frame's side was cut off straight down it.
 //
 // So for a view RT64 widens to the window (eb::view_widened), the bound reaches as far past each side as the window
-// shows, eb_particle_margin's pixels of the screen (src/game/widescreen.cpp); the particles are drawn with RT64's
+// shows, eb_view_margin's pixels of the screen (src/game/widescreen.cpp); the particles are drawn with RT64's
 // gEXTextureRectangle, whose coordinates are signed 16 bits, at the same place and size, the sparks, a pixel each, with
 // RT64's extended fill rectangle (gEXFillRectangle, below: the game's gDPFillRectangle, 10 bits unsigned, signed, so a
 // spark draws with the shader the game's own does); and under an extended scissor as far out, the view's own rows high,
@@ -58,7 +58,7 @@ typedef struct ViewRect {
 #define gEXFillRectangle(cmd, lorigin, rorigin, ulx, uly, lrx, lry)     G_EX_COMMAND2(cmd,         PARAM(RT64_EXTENDED_OPCODE, 8, 24) | PARAM(G_EX_FILLRECT_V1, 24, 0),         PARAM(lorigin, 12, 0) | PARAM(rorigin, 12, 12),                 PARAM(ulx, 16, 16) | PARAM(uly, 16, 0),         PARAM(lrx, 16, 16) | PARAM(lry, 16, 0)     )
 
 // How far past each side of the screen view `view` shows in the window, in the screen's pixels (widescreen.cpp).
-s32 eb_particle_margin(s32 view);
+s32 eb_view_margin(s32 view);
 
 static inline s32 project(Vec3f *p, s32 view, s32 mtx, s32 *sx, s32 *sy, s32 *sz, s32 *w) {
     if (gCurTrack_4->f2C == TRACK_ENV_STADIUM) {
@@ -101,7 +101,7 @@ RECOMP_PATCH Gfx *particles_draw(Gfx *gdl, s32 view, s32 dyn) {
         return gdl;
     }
 
-    margin = eb_particle_margin(view);
+    margin = eb_view_margin(view);
     if (margin != 0) {
         rect = &gViewRects[gNumViews - 1][view];
         gEXEnable(gdl++);
