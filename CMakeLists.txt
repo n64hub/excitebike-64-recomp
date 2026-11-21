@@ -96,9 +96,9 @@ set(RT64_SKIP_COLLAPSED_MATCHES ON)
 # steps in one place of the horizon over four minutes of races, and none with it.
 set(RT64_INTERPOLATE_RECT_SCROLLS ON)
 # A race's load copies the track's models into the framebuffer the game isn't showing, and the race's first frame clears
-# it black (CLAUDE.md, Scratch memory). Without Render to RAM, RT64 took that copy, still in RDRAM, for something the CPU
-# wrote after the clear and put it over the black at the next VI, a frame of noise across the top of the screen in the
-# black before the title. So RT64 hashes a framebuffer a list filled whole as the list ends
+# it black (CLAUDE.md, Scratch memory). RT64 took that copy, still in RDRAM, for something the CPU wrote after the clear
+# and put it over the black at the next VI, a frame of noise across the top of the screen in the black before the
+# title. So RT64 hashes a framebuffer a list filled whole as the list ends
 # (RT64_HASH_FILLED_FRAMEBUFFERS, off on a desktop build and on with Emscripten), and puts over the picture only what
 # the CPU writes after.
 set(RT64_HASH_FILLED_FRAMEBUFFERS ON)
