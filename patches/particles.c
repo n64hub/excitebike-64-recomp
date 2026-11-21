@@ -9,9 +9,10 @@
 //
 // So for a view RT64 widens to the window (eb::view_widened), the bound reaches as far past each side as the window
 // shows, eb_particle_margin's pixels of the screen (src/game/widescreen.cpp); the particles are drawn with RT64's
-// gEXTextureRectangle, whose coordinates are signed 16 bits, at the same place and size, the sparks too, a pixel each
-// (the game's gDPFillRectangle, which is 10 bits unsigned); and under an extended scissor as far out, the view's own
-// rows high, the game's put back after them. With no margin (Original, a window no wider than 4:3, split screens side
+// gEXTextureRectangle, whose coordinates are signed 16 bits, at the same place and size, the sparks, a pixel each, with
+// RT64's extended fill rectangle (gEXFillRectangle, below: the game's gDPFillRectangle, 10 bits unsigned, signed, so a
+// spark draws with the shader the game's own does); and under an extended scissor as far out, the view's own rows high,
+// the game's put back after them. With no margin (Original, a window no wider than 4:3, split screens side
 // by side) all three are the game's own.
 
 #include "patches.h"
@@ -51,6 +52,10 @@ s32 project_to_screen(s32 x, s32 y, s32 z, s32 *sx, s32 *sy, s32 *sz, s32 *w, s3
 typedef struct ViewRect {
     s32 x, y, w, h;
 } ViewRect;
+
+// RT64's G_EX_FILLRECT_V1, which rt64_extended_gbi.h has no macro for: gDPFillRectangle's rectangle in 10.2 fixed
+// point, signed 16 bits, the same fill RT64 draws for the game's own (rt64_gbi_extended.cpp, fillrectV1).
+#define gEXFillRectangle(cmd, lorigin, rorigin, ulx, uly, lrx, lry)     G_EX_COMMAND2(cmd,         PARAM(RT64_EXTENDED_OPCODE, 8, 24) | PARAM(G_EX_FILLRECT_V1, 24, 0),         PARAM(lorigin, 12, 0) | PARAM(rorigin, 12, 12),                 PARAM(ulx, 16, 16) | PARAM(uly, 16, 0),         PARAM(lrx, 16, 16) | PARAM(lry, 16, 0)     )
 
 // How far past each side of the screen view `view` shows in the window, in the screen's pixels (widescreen.cpp).
 s32 eb_particle_margin(s32 view);
@@ -442,9 +447,8 @@ RECOMP_PATCH Gfx *particles_draw(Gfx *gdl, s32 view, s32 dyn) {
                 gDPSetPrimColor(gdl++, 0, 0, w + 0x80, w + 0x80, 0, 255);
                 gDPSetPrimDepth(gdl++, sz - 0x100, 0);
                 if (margin != 0) {
-                    /* the pixel as a rectangle, which the primitive colour fills whatever the tile holds */
-                    gEXTextureRectangle(gdl++, G_EX_ORIGIN_NONE, G_EX_ORIGIN_NONE, sx << 2, sy << 2, (sx + 1) << 2,
-                                        (sy + 1) << 2, G_TX_RENDERTILE, 0, 0, 1 << 10, 1 << 10);
+                    gEXFillRectangle(gdl++, G_EX_ORIGIN_NONE, G_EX_ORIGIN_NONE, sx << 2, sy << 2, (sx + 1) << 2,
+                                     (sy + 1) << 2);
                 } else {
                     gDPFillRectangle(gdl++, sx, sy, sx + 1, sy + 1);
                 }
