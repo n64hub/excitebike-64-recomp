@@ -29,6 +29,15 @@ namespace eb {
 
     // Whether the race's view `view` is one widened to the screen's width and by RT64 to the window (widescreen.cpp).
     bool view_widened(uint8_t* rdram, int32_t view);
+
+    // The game's own view and the full one, in pixels, of the view whose box the HUD reads is `box` (x, y, width,
+    // height in pixels); false for a rectangle that is no view's box (widescreen.cpp).
+    bool view_of_box(uint8_t* rdram, const int32_t box[4], int32_t game[4], int32_t full[4]);
+
+    // The finish's checkerboard over the view whose box is `box`, out to the view's edges and the window's sides, as
+    // commands for `put`; false, writing nothing, where it can't be placed (checkerboard.cpp).
+    bool draw_checkerboard(uint8_t* rdram, const int32_t box[4], void (*put)(void* ctx, uint32_t w0, uint32_t w1),
+                           void* ctx);
 }
 
 #endif
