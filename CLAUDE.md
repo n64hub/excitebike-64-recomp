@@ -20,10 +20,11 @@ This repo is the game: its recompilation, the patches over it, the desktop build
   loader (`src/game/boot.cpp`), the settings (`src/game/config.cpp`), libultra functions the runtime leaves out
   (`src/game/libultra.cpp`) and the Rumble Pak beside the Controller Pak (`src/game/rumble_pak.cpp`), the race's
   widescreen culling, HUD, sky, particles and riders (`src/game/widescreen.cpp`, `src/game/hud.cpp`,
-  `src/game/sky.cpp`, `patches/particles.c`, `patches/riders.c`), the main menu's sponsor logo across a wide window
-  (`src/game/menu_logo.cpp`), the fades across it too (`src/game/wipe.cpp`), the finish's checkerboard over the whole view (`src/game/checkerboard.cpp`),
-  the General tab's Draw Distance (`src/game/draw_distance.cpp`), the boot's logos and notices kept at 4:3 in it
-  (`src/game/splash.cpp`), the track editor out to its edges
+  `src/game/sky.cpp`, `patches/particles.c`, `patches/riders.c`, and the Desert's ground in `patches/desert.c`), the
+  stadium lights' glows out to a wide window's sides (`patches/sun.c`), the main menu's sponsor logo across a wide
+  window (`src/game/menu_logo.cpp`), the fades across it too (`src/game/wipe.cpp`), the finish's checkerboard over the
+  whole view (`src/game/checkerboard.cpp`), the General tab's Draw Distance (`src/game/draw_distance.cpp`), the boot's
+  logos and notices kept at 4:3 in it (`src/game/splash.cpp`), the track editor out to its edges
   (`src/game/editor.cpp`), and a stack trace on a crash, on Windows and Linux (`src/main/crash_trace.cpp`).
 - `lib/`: `excitebike64` (the decomp, for `syms/` and the patches' headers), `ultralib` (the libultra the decomp builds
   against, for its headers), upstream `rt64`, `N64ModernRuntime` and `RecompFrontend` at the commits
