@@ -27,18 +27,26 @@
 // data ends at 0x80801040. The first command the game wrote is replaced by a branch to the buffer, which branches back
 // to where the game goes on. Eight buffers in turn, since the renderer may read a list a frame or more after the game
 // sends it, and the game keeps two lists. The pause menu and the menus are drawn elsewhere and stay in the middle.
+//
+// The finish's checkerboard, which event_draw_hud draws over the winner's view as fill rectangles, makes no piece: it
+// is drawn again over the whole view and out to the window's sides by src/game/checkerboard.cpp, and as a piece
+// across the middle it held the HUD's pieces near it (the times, the minimap, the gauge) in the 4:3 frame.
 
 #include <cstdint>
+#include <algorithm>
 #include <cstring>
 
 #define F3DEX_GBI_2
 #include "rt64_extended_gbi.h"
+
+#include "eb.h"
 
 namespace {
 
 // F3DEX2's commands and flags this reads (the decomp's include/PR/gbi.h).
 constexpr uint32_t G_VTX = 0x01, G_DL = 0xDE, G_ENDDL = 0xDF, G_MTX = 0xDA, G_POPMTX = 0xD8, G_MOVEMEM = 0xDC;
 constexpr uint32_t G_TEXRECT = 0xE4, G_TEXRECTFLIP = 0xE5, G_RDPHALF_1 = 0xE1, G_RDPHALF_2 = 0xF1, G_FILLRECT = 0xF6, G_SETSCISSOR = 0xED;
+constexpr uint32_t G_SETOTHERMODE_L = 0xE2, G_SETCOMBINE = 0xFC, G_TEXTURE = 0xD7, G_SETPRIMCOLOR = 0xFA;
 constexpr uint32_t G_MV_VIEWPORT = 8, G_DL_NOPUSH = 1, G_SC_NON_INTERLACE = 0;
 constexpr uint32_t G_MTX_PUSH = 1, G_MTX_LOAD = 2, G_MTX_PROJECTION = 4;
 // gSPViewport's first word.
@@ -245,6 +253,7 @@ struct Rsp {
 struct Cmd {
     uint32_t w0, w1;
     int piece; // the piece it starts drawing for, or -1
+    uint32_t board_end; // for the first command of the finish's checkerboard, the index past its last; else 0
 };
 
 struct Piece {
@@ -332,6 +341,31 @@ void spanning_rect_from_left(Cmd& rect, Cmd& half1, const Cmd& half2, int sc_ulx
     half1.w1 = (uint32_t(uint16_t(s)) << 16) | (half1.w1 & 0xFFFF);
 }
 
+// The finish's checkerboard (src/game/checkerboard.cpp): event_draw_hud sets its render mode, combiner, texture off and
+// the screen's scissor, then draws it as nothing but primitive colours and fill rectangles. The index past its last
+// command when one starts at i, else 0.
+uint32_t board_at(uint32_t i, uint32_t count) {
+    if (i < 4 || (g_cmds[i].w0 >> 24) != G_SETPRIMCOLOR || (g_cmds[i - 1].w0 >> 24) != G_SETSCISSOR ||
+        (g_cmds[i - 2].w0 >> 24) != G_TEXTURE || (g_cmds[i - 3].w0 >> 24) != G_SETCOMBINE ||
+        (g_cmds[i - 4].w0 >> 24) != G_SETOTHERMODE_L) {
+        return 0;
+    }
+    uint32_t k = i;
+    int rects = 0;
+    for (; k < count; k++) {
+        const uint32_t op = g_cmds[k].w0 >> 24;
+        if (op == G_FILLRECT) {
+            rects++;
+        }
+        else if (op != G_SETPRIMCOLOR) {
+            break;
+        }
+    }
+    return rects >= 4 ? k : 0;
+}
+
+void put_writer(void* ctx, uint32_t w0, uint32_t w1);
+
 void anchor(uint32_t start, uint32_t end) {
     uint32_t count = (end - start) / 8;
     if (end <= start || count > MAX_COMMANDS || (start & 7) != 0) {
@@ -343,10 +377,22 @@ void anchor(uint32_t start, uint32_t end) {
     rsp.viewport(EB_SCREEN_VIEWPORT);
     int pieces = 0;
     for (uint32_t i = 0; i < count; i++) {
+        g_cmds[i].w0 = rd_w(start + i * 8);
+        g_cmds[i].w1 = rd_w(start + i * 8 + 4);
+    }
+    uint32_t board_end = 0;
+    for (uint32_t i = 0; i < count; i++) {
         Cmd& cmd = g_cmds[i];
-        cmd.w0 = rd_w(start + i * 8);
-        cmd.w1 = rd_w(start + i * 8 + 4);
         cmd.piece = -1;
+        cmd.board_end = 0;
+        // The checkerboard makes no piece: it is drawn over the whole view (below), and as a piece across the middle
+        // it took the HUD's pieces near it there with it.
+        if (i >= board_end && (cmd.board_end = board_at(i, count)) != 0) {
+            board_end = cmd.board_end;
+        }
+        if (i < board_end) {
+            continue;
+        }
         Box box;
         bool model = false;
         switch (cmd.w0 >> 24) {
@@ -464,6 +510,24 @@ void anchor(uint32_t start, uint32_t end) {
     const Cmd* last_scissor = nullptr;
     for (uint32_t i = 0; i < count; i++) {
         Cmd& cmd = g_cmds[i];
+        if (cmd.board_end != 0) {
+            // Its rectangles' box is the winner's view's (gViewRects).
+            int32_t x0 = 0x7FFF, y0 = 0x7FFF, x1 = -0x7FFF, y1 = -0x7FFF;
+            for (uint32_t k = i; k < cmd.board_end; k++) {
+                if ((g_cmds[k].w0 >> 24) == G_FILLRECT) {
+                    x0 = std::min<int32_t>(x0, ((g_cmds[k].w1 >> 12) & 0xFFF) / 4);
+                    y0 = std::min<int32_t>(y0, (g_cmds[k].w1 & 0xFFF) / 4);
+                    x1 = std::max<int32_t>(x1, ((g_cmds[k].w0 >> 12) & 0xFFF) / 4);
+                    y1 = std::max<int32_t>(y1, (g_cmds[k].w0 & 0xFFF) / 4);
+                }
+            }
+            const int32_t box[4] = { x0, y0, x1 - x0, y1 - y0 };
+            if (eb::draw_checkerboard(g_rdram, box, put_writer, &out)) {
+                set_scissor();
+                i = cmd.board_end - 1;
+                continue;
+            }
+        }
         if (cmd.piece >= 0) {
             const Piece& piece = g_pieces[cmd.piece];
             if ((piece.origin != G_EX_ORIGIN_NONE) != sc_wide) {
@@ -516,6 +580,10 @@ void anchor(uint32_t start, uint32_t end) {
     // The game's first command becomes the branch to the buffer.
     wr_w(start, (uint32_t(G_DL) << 24) | (G_DL_NOPUSH << 16));
     wr_w(start + 4, buffer & 0x1FFFFFFF);
+}
+
+void put_writer(void* ctx, uint32_t w0, uint32_t w1) {
+    static_cast<Writer*>(ctx)->put(w0, w1);
 }
 
 } // namespace
