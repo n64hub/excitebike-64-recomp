@@ -1,1 +1,0 @@
-- Widescreen: the bikes' dust, mud, splashes and exhaust puffs are drawn out to the window's edges, where they used to vanish at the old 4:3 frame's sides
