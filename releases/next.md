@@ -1,0 +1,1 @@
+- In the Desert, in a window wider than 4:3, the dunes now reach the window's sides instead of stopping where the 4:3 picture ended and leaving sky-blue gaps there, with cacti standing over them (#37)
