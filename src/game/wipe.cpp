@@ -6,10 +6,12 @@
 //
 // So in a wider window us.toml hooks screen_draw_wipe's entry, noting where the display list stands ($a0), and its
 // return, the list's end in $v0, and eb_wipe_end puts the commands it added in a buffer of this file's: the scissor
-// becomes an RT64 extended one as wide as the window, and the column that touches the screen's left side reaches the
-// window's left side, the one that touches its right side the window's right, so each side takes the alpha of the
-// column beside it, as the ramp sweeps across. The first command the game wrote becomes a branch to the buffer, which
-// branches back to where the game goes on, as src/game/sky.cpp does.
+// becomes an RT64 extended one as wide as the window, and every column is spread across the window, the screen's left
+// side at the window's left and its right side at the window's right, so the ramp sweeps the whole window. Stretching
+// only the two outer columns to the window's sides left each side the alpha of one column: the left side, the column
+// the right-to-left sweep darkens last, stayed lit as one flat strip while the ramp beside it went dark. The columns
+// are untextured colour, so spreading them changes nothing but where the ramp stands. The first command the game wrote
+// becomes a branch to the buffer, which branches back to where the game goes on, as src/game/sky.cpp does.
 
 #include <cmath>
 #include <cstdint>
@@ -104,18 +106,12 @@ extern "C" void eb_wipe_end(uint8_t* rdram, uint32_t gdl) {
             put(w0, w1);
             continue;
         }
-        int32_t lrx = (w0 >> 12) & 0xFFF, ulx = (w1 >> 12) & 0xFFF;
+        // The screen's [0, screen] onto the window's [window_left, window_right], in the rectangle's 10.2 fixed point.
+        auto spread = [&](int32_t x) {
+            return int32_t(int64_t(window_left) * 4 + int64_t(x) * (window_right - window_left) / screen);
+        };
+        const int32_t ulx = spread((w1 >> 12) & 0xFFF), lrx = spread((w0 >> 12) & 0xFFF);
         const int32_t lry = w0 & 0xFFF, uly = w1 & 0xFFF;
-        if (ulx > 0 && lrx < screen * 4) {
-            put(w0, w1);
-            continue;
-        }
-        if (ulx <= 0) {
-            ulx = window_left * 4;
-        }
-        if (lrx >= screen * 4) {
-            lrx = window_right * 4;
-        }
         // RT64's extended fill rectangle (rt64_gbi_extended.cpp's fillrectV1; rt64_extended_gbi.h has no macro).
         put((uint32_t(RT64_EXTENDED_OPCODE) << 24) | G_EX_FILLRECT_V1,
             uint32_t(G_EX_ORIGIN_NONE) | (uint32_t(G_EX_ORIGIN_NONE) << 12));
