@@ -95,11 +95,23 @@ set(RT64_SKIP_COLLAPSED_MATCHES ON)
 # sky stepped a game frame at a time against the track in front: in frame dumps of tools/frame_plan.txt at 16:9, 405
 # steps in one place of the horizon over four minutes of races, and none with it.
 set(RT64_INTERPOLATE_RECT_SCROLLS ON)
+# A race's load copies the track's models into the framebuffer the game isn't showing, and the race's first frame clears
+# it black (CLAUDE.md, Scratch memory). Without Render to RAM, RT64 took that copy, still in RDRAM, for something the CPU
+# wrote after the clear and put it over the black at the next VI, a frame of noise across the top of the screen in the
+# black before the title. So RT64 hashes a framebuffer a list filled whole as the list ends
+# (RT64_HASH_FILLED_FRAMEBUFFERS, off on a desktop build and on with Emscripten), and puts over the picture only what
+# the CPU writes after.
+set(RT64_HASH_FILLED_FRAMEBUFFERS ON)
 # What lies past the framebuffer's sides counts only to them when RT64 judges what covers a frame's whole width
 # (RT64_SCISSOR_INSIDE_FRAMEBUFFER, off on a desktop build and on with Emscripten): the main menu's sponsor logo draws
 # under a scissor as wide as the window (src/game/menu_logo.cpp), and without it the menu's frame and items were drawn
 # stretched to the window's width.
 set(RT64_SCISSOR_INSIDE_FRAMEBUFFER ON)
+# The game draws each rider from above into its shadow texture under F3DLX2.Rej (lib/excitebike64's src/game/shadow.c),
+# through a projection that puts all of it past the near plane, which a Rej microcode draws, having no near plane to
+# reject by. RT64 takes Rej for NoN there only with RT64_REJ_WITHOUT_NEAR_CLIP (off on a desktop build and on with
+# Emscripten): without it every shadow texture stayed empty, and the ground drew no shadow under any bike.
+set(RT64_REJ_WITHOUT_NEAR_CLIP ON)
 # Up to four players, each a port of their own (src/main/main.cpp, get_connected_device_info): the game turns
 # RecompFrontend's single-player mode off, and plays as single-player mode until players are assigned, as with
 # Emscripten, so a player alone needn't assign their pad or keyboard first. And until then each pad plays a port of its

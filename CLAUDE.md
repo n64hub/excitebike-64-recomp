@@ -76,4 +76,7 @@ This repo is the game: its recompilation, the patches over it, the desktop build
 - **Scratch memory.** The game uses the framebuffer it isn't drawing and the Z buffer as scratch memory: a race's load
   copies the track's models into the spare framebuffer (tubegfx.c's `tube_build_dlists`), and the height grids, the
   map and the editor's save work in the Z buffer. Its CPU reads no frame it drew, so RT64's Render to RAM is off
-  (`main.cpp`): a frame copied back into RDRAM would land on that scratch.
+  (`main.cpp`): a frame copied back into RDRAM would land on that scratch. Without it, RT64 takes the spare
+  framebuffer's copy for something the CPU wrote after the race's first frame filled it black, unless
+  `RT64_HASH_FILLED_FRAMEBUFFERS` is on (`CMakeLists.txt`): a flash of noise across the top of the screen in the black
+  before the title.
