@@ -58,6 +58,7 @@ constexpr uint32_t EB_SCREEN_HEIGHT = 0x800F1D90;   // gScreenHeight: 240 or 480
 constexpr uint32_t EB_SCREEN_VIEWPORT = 0x800C2F28; // gScreenViewport, the whole screen's
 constexpr uint32_t EB_NUM_VIEWS = 0x800C2ED4;       // gNumViews
 constexpr uint32_t EB_VIEW_RECTS = 0x800E2038;      // gViewRects: the first, one player's x, y, width and height
+constexpr uint32_t EB_GAME_MODE = 0x800F075C;       // gGame.mode (gGame 0x800F0710, +0x4C): GAME_MODE_SEASON is 1
 constexpr uint32_t EB_INSET_VIEW = 0x800C2CC4;      // gInsetViewActive
 constexpr uint32_t EB_SPLIT_VERTICAL = 0x800C2CC8;  // gSplitVertical
 
@@ -277,8 +278,10 @@ uint32_t g_next_buffer = 0;
 // The track's intro (eb_intro_begin), placed by the game's layout of it rather than by what lies near what: its top bar,
 // the round cards and the bottom panel lie within a few pixels of each other, and joined they made one piece across the
 // middle. In the screen's pixels: the left of the round cards' column, the top bar's bottom and the bottom panel's top.
+// Only a season's intro has the round cards: the others centre "Press the A Button to Race" across their column.
 struct Intro {
     bool on = false;
+    bool season = false;
     float cards = 0, top = 0, panel = 0;
 } g_intro;
 
@@ -292,7 +295,7 @@ uint32_t intro_origin(const Box& box, Cmd& cmd) {
         return G_EX_ORIGIN_NONE;
     }
     if (box.x0 >= g_intro.cards) {
-        return G_EX_ORIGIN_RIGHT;
+        return g_intro.season ? G_EX_ORIGIN_RIGHT : G_EX_ORIGIN_NONE;
     }
     if (box.y1 > g_intro.top) {
         return G_EX_ORIGIN_NONE;
@@ -706,6 +709,7 @@ extern "C" void eb_intro_begin(uint8_t* rdram, uint32_t gdl) {
     g_intro.cards = vx + vw - 170.0f * sx;
     g_intro.top = vy + 40.0f * sy;
     g_intro.panel = vy + vh - 40.0f * sy;
+    g_intro.season = rd_w(EB_GAME_MODE) == 1;
     g_start = gdl;
     g_open = true;
 }
