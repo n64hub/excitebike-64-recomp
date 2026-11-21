@@ -1,15 +1,18 @@
 // The race's particles out to the window's edges: dust, smoke, splashes, exhaust puffs, mud, sparkles and sparks past
 // the 4:3 frame's sides in a wide window, where the track is drawn (src/game/widescreen.cpp). particles_draw (the
-// decomp's src/game/mud2.c, copied here as it is but for the two changes below) projects each particle on the CPU and
+// decomp's src/game/mud2.c, copied here as it is but for the changes below) projects each particle on the CPU and
 // skips one whose screen x is outside the screen's 0 to gScreenWidth, killing it with one view, so a rider's dust at
-// the window's side went where the old frame's edge was. And it draws each with gSPTextureRectangle, whose x is 10.2
-// fixed point in 12 bits, 0 to 1023.75, so nothing it draws can start left of the screen.
+// the window's side went where the old frame's edge was. It draws each with gSPTextureRectangle, whose x is 10.2 fixed
+// point in 12 bits, 0 to 1023.75, so nothing it draws can start left of the screen. And it draws them under the
+// view's scissor, the screen's width, which RT64 widens to the window for triangles but not for rectangles: a dust
+// cloud drawn across the old frame's side was cut off straight down it.
 //
 // So for a view RT64 widens to the window (eb::view_widened), the bound reaches as far past each side as the window
-// shows, eb_particle_margin's pixels of the screen (src/game/widescreen.cpp), and the particles are drawn with RT64's
-// gEXTextureRectangle, whose coordinates are signed 16 bits, at the same place and size; the sparks too, a pixel each
-// (the game's gDPFillRectangle, which is 10 bits unsigned). With no margin (Original, a window no wider than 4:3, split
-// screens side by side) both are the game's own.
+// shows, eb_particle_margin's pixels of the screen (src/game/widescreen.cpp); the particles are drawn with RT64's
+// gEXTextureRectangle, whose coordinates are signed 16 bits, at the same place and size, the sparks too, a pixel each
+// (the game's gDPFillRectangle, which is 10 bits unsigned); and under an extended scissor as far out, the view's own
+// rows high, the game's put back after them. With no margin (Original, a window no wider than 4:3, split screens side
+// by side) all three are the game's own.
 
 #include "patches.h"
 
@@ -42,6 +45,12 @@ s32 project_to_screen(s32 x, s32 y, s32 z, s32 *sx, s32 *sy, s32 *sz, s32 *w, s3
 #define gCurTrack_4 (*(Cfg **)0x800F0704)
 #define gScreenWidth (*(volatile s32 *)0x800F1D8C)
 #define gScreenHeight (*(volatile s32 *)0x800F1D90)
+#define gViewRects ((ViewRect (*)[4])0x800E2038)
+
+// gViewRects' views: each view's rectangle in pixels, by the views' count, the full views while the race's 3D draws.
+typedef struct ViewRect {
+    s32 x, y, w, h;
+} ViewRect;
 
 // How far past each side of the screen view `view` shows in the window, in the screen's pixels (widescreen.cpp).
 s32 eb_particle_margin(s32 view);
@@ -81,6 +90,7 @@ RECOMP_PATCH Gfx *particles_draw(Gfx *gdl, s32 view, s32 dyn) {
     s32 aux; /* a particle's surface, or the smoke's fade with distance */
     Rider *rider;
     s32 margin;
+    ViewRect *rect;
 
     if (gNumScreens >= 4) {
         return gdl;
@@ -88,7 +98,11 @@ RECOMP_PATCH Gfx *particles_draw(Gfx *gdl, s32 view, s32 dyn) {
 
     margin = eb_particle_margin(view);
     if (margin != 0) {
+        rect = &gViewRects[gNumViews - 1][view];
         gEXEnable(gdl++);
+        gEXPushScissor(gdl++);
+        gEXSetScissor(gdl++, G_SC_NON_INTERLACE, G_EX_ORIGIN_NONE, G_EX_ORIGIN_NONE, -margin, rect->y,
+                      gScreenWidth + margin, rect->y + rect->h);
     }
 
     gDPPipeSync(gdl++);
@@ -444,5 +458,8 @@ RECOMP_PATCH Gfx *particles_draw(Gfx *gdl, s32 view, s32 dyn) {
     gDPSetTextureLUT(gdl++, G_TT_RGBA16);
     gDPSetDepthSource(gdl++, G_ZS_PIXEL);
     gDPSetColorDither(gdl++, G_CD_MAGICSQ);
+    if (margin != 0) {
+        gEXPopScissor(gdl++);
+    }
     return gdl;
 }
