@@ -33,7 +33,8 @@
 // (tube_cull_sections), neither above or below. Both are widened by eb_cull_scale (us.toml's hooks): by the views'
 // widths' ratio, times the window's aspect ratio over 4:3 with the Graphics tab's Aspect Ratio Expand for the views
 // RT64 widens to the window. At 32:9 the stands, barriers and track past the 4:3 frame's sides came and went with the
-// camera.
+// camera. The Desert's ground, drawn from a height map round the camera with no track sections, is widened the same
+// way (patches/desert.c, by eb_desert_cull_scale).
 
 #include <cmath>
 #include <cstdint>
@@ -249,6 +250,11 @@ extern "C" float eb_cull_scale(uint8_t* rdram) {
     }
 }
 
+// eb_cull_scale for patches/desert.c's des_calc_lod_grid, in 1024ths ($v0).
+extern "C" void eb_desert_cull_scale(uint8_t* rdram, recomp_context* ctx) {
+    ctx->r2 = (int32_t)std::lround(eb_cull_scale(rdram) * 1024.0f);
+}
+
 float eb::window_wide() {
     if (ultramodern::renderer::get_graphics_config().ar_option != ultramodern::renderer::AspectRatio::Expand) {
         return 1.0f;
@@ -265,8 +271,8 @@ float eb::window_wide() {
 
 // How far past each side of the screen the race's view `view` shows in the window, in the screen's pixels: for a view
 // RT64 widens to the window, half the screen's width times how much wider than 4:3 the window is, less the screen;
-// none for the others. patches/particles.c's particles_draw draws the particles that far out ($a0 the view, $v0 the
-// pixels).
+// none for the others. patches/particles.c's particles_draw draws the particles that far out, and patches/sun.c the
+// stadium lights' glows ($a0 the view, $v0 the pixels).
 extern "C" void eb_particle_margin(uint8_t* rdram, recomp_context* ctx) {
     const int32_t view = (int32_t)ctx->r4;
     int32_t margin = 0;
