@@ -66,6 +66,11 @@ ROM (the cartridge holds it packed, and a boot loader unpacks it on a console), 
 `syms/` is written from the decomp's own tables of USA Rev 1 by `tools/gen_syms.py`, with nothing built: only a move
 of `lib/excitebike64` needs it again.
 
+## Thanks
+
+Thanks to [clintosfan](https://github.com/clintosfan) for testing it thoroughly: most of what has been fixed here, in
+wide windows, at high refresh rates and on every track and screen of the game, was found in their reports.
+
 ## License
 
 GPL-3.0 (`LICENSE`), as the recompilations it follows. The decompilation has no license; this project reads it and
