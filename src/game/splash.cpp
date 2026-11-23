@@ -5,6 +5,11 @@
 // rectangle that spans the screen to the window's width, so in a 32:9 window the legal screen's text was drawn twice
 // as wide as it is high. The menus' backgrounds, a pattern behind the menu, are left to reach the window's sides.
 //
+// The sides stay black, as N64Recomp-browser's CLAUDE.md (Rules) has a 4:3 picture's sides filled only by a wrap
+// without a seam, never a mirror: none of these pictures' right edges meets its left (the Left Field water's ripples
+// meet in a V, the legal screen is dark at its left and light at its right, the notices' sponsor pattern breaks), and
+// mirrored, the legal screen's logos and the pattern's names read backwards.
+//
 // So in a wider window us.toml hooks that call, noting where the display list stands ($a3) and the screen ($s7), and
 // for those screens eb_splash_end puts the commands it added in a buffer of this file's after a black fill of the whole
 // screen, which RT64 widens to the window, and between gEXSetRectAspect(G_EX_ASPECT_ADJUST) and back to AUTO, so the
