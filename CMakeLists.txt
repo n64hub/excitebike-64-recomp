@@ -120,6 +120,13 @@ set(RT64_REJ_WITHOUT_NEAR_CLIP ON)
 # moved back by the step the race's paired sections agree on: in frame dumps of 70 s of that race, frames between with a
 # new thin line of the sky's colour went from 45 to none.
 set(RT64_MOVE_UNPAIRED_WITH_CAMERA ON)
+# Original Excitebike, under Special Tracks, draws the NES picture as 8x8 rects of 16x8 tiles wrapped at 16 texels, the
+# 16th of each never filled, and stretches it across a wide window. A texrect stretched so starts partway along a native
+# pixel of the screen's square grid, and its first high-res columns took the texel before its first: every tile drew a
+# green or black line of that 16th texel down its left edge, through the title's letters, the crowd, the track and the
+# HUD (#62). RT64_RECT_OWN_PIXEL_GRID (off on a desktop build and on with Emscripten) steps a texrect's texture from its
+# own edges at its own scale.
+set(RT64_RECT_OWN_PIXEL_GRID ON)
 # Up to four players, each a port of their own (src/main/main.cpp, get_connected_device_info): the game turns
 # RecompFrontend's single-player mode off, and plays as single-player mode until players are assigned, as with
 # Emscripten, so a player alone needn't assign their pad or keyboard first. And until then each pad plays a port of its
