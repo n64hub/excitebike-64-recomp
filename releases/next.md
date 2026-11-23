@@ -1,0 +1,1 @@
+- On the outdoor tracks, Draw Distance's Far (Settings, General, on by default) draws the ground, cliffs, fences, banners and trees ahead that popped in as you rode, out to the far clip; Original keeps the game's own (#63)
