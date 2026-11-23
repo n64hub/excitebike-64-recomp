@@ -1,0 +1,1 @@
+- Fixed Excite 3D's stands, wall, grass and track vanishing at the sides of a wide window (Aspect Ratio Expand), where the sky's blue showed (#66)

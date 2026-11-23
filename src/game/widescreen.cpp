@@ -50,7 +50,14 @@
 // (eb_arena_cull_scale), room for a model's own size. In a minute of Rider Select's circling camera at 16:9, 22 frames
 // had such a hole touching the picture's edge and none did after; in the Stunt Course, one at 1:55 on the clock
 // still showed with the box alone and is gone with both.
+//
+// Excite 3D's side view culls no other way: tube_cull_sections marks visible only the sections whose middle is within
+// 3.75 m before and 1.25 m after the rider's section's middle along the track, a strip the 4:3 frame's sides end on. Past
+// them, at the wide picture's sides, the stands, the wall, the grass and the track went as a section left the strip,
+// and the sky's clear showed in their place. So eb_excite3d_cull (us.toml's hook in tube_update_view) marks visible as
+// well every section with a part within the widened view's sides, and the objects on them follow.
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 
@@ -77,6 +84,17 @@ namespace {
     constexpr gpr vi_mode = (gpr)(int32_t)0x800CD5E8;           // gViMode: 2 in the high-resolution mode
     constexpr gpr screen_width = (gpr)(int32_t)0x800F1D8C;      // gScreenWidth
     constexpr gpr screen_height = (gpr)(int32_t)0x800F1D90;     // gScreenHeight
+    constexpr gpr track_sections = (gpr)(int32_t)0x800C9F84;    // gTrackSections: count, then 0x20 a section
+    constexpr gpr section_bounds = (gpr)(int32_t)0x800E81B4;    // sSectionBounds: x0, x1, z0, z1 a section
+    constexpr gpr cur_track = (gpr)(int32_t)0x800F0704;         // gCurTrack
+    constexpr gpr tracks = (gpr)(int32_t)0x800CBB50;            // gTracks, 0xA0 each
+    constexpr gpr riders = (gpr)(int32_t)0x800E4160;            // gRiders, 0x7E0 each, camMode at 0x5AA
+    constexpr gpr cam_pos = (gpr)(int32_t)0x800E8A30;           // gCamPos[4]: x, y, z in 16ths of a millimetre
+    constexpr gpr cam_yaw = (gpr)(int32_t)0x800E89A0;           // gCamYaw[4]: 0x10000 a turn
+    constexpr gpr cam_pitch = (gpr)(int32_t)0x800E8318;         // gCamPitch[4]: 0x10000 a turn, down as more
+    constexpr gpr cos_table = (gpr)(int32_t)0x800C35A0;         // gCosTable: 0x1000 s16 a turn, 0x4000 for 1
+    constexpr int32_t track_excite_3d = 20;                     // TRACK_EXCITE_3D
+    constexpr int32_t cam_mode_side_view = 4;                   // CAM_MODE_SIDE_VIEW
 
     struct Rect {
         int32_t x, y, w, h;
@@ -291,6 +309,64 @@ extern "C" float eb_arena_cull_scale(uint8_t* rdram) {
 // eb_cull_scale for patches/desert.c's des_calc_lod_grid, in 1024ths ($v0).
 extern "C" void eb_desert_cull_scale(uint8_t* rdram, recomp_context* ctx) {
     ctx->r2 = (int32_t)std::lround(eb_cull_scale(rdram) * 1024.0f);
+}
+
+// Excite 3D's side view (above): us.toml's hook in tube_update_view, after tube_cull_sections and before the sections'
+// bits are copied to their objects, with `view` in $s0. A section is marked visible too when part of its box (its own,
+// and sSectionBounds', grown to hold its objects) lies within the side planes of the view widened by eb_cull_scale,
+// with a tenth more. None is taken out, so what the game draws stays drawn. Each plane passes through the camera and
+// is 0.40 of the depth across (a 33-degree field of view at 4:3). The camera looks down at the track (gCamPitch), so a
+// point's depth is its distance ahead times the pitch's cosine plus how far below the camera it is times its sine, and
+// the sections have no height, so 30 m below is allowed for, the track's lowest ground under the rider and more. A
+// section is left out only when its four corners are all past the same side, or all behind that depth.
+extern "C" void eb_excite3d_cull(uint8_t* rdram, int32_t view) {
+    if (view < 0 || view >= 4 || MEM_W(0, cur_track) != (int32_t)(tracks + track_excite_3d * 0xA0) ||
+        MEM_H(0x5AA, riders) != cam_mode_side_view) {
+        return;
+    }
+    const gpr list = (gpr)MEM_W(0, track_sections);
+    const gpr bounds = (gpr)MEM_W(0, section_bounds);
+    if (list == 0) {
+        return;
+    }
+    const int32_t count = MEM_W(0, list);
+    const float cam_x = float(MEM_W(view * 12, cam_pos) >> 4);
+    const float cam_z = float(MEM_W(view * 12 + 8, cam_pos) >> 4);
+    const int32_t yaw = MEM_W(view * 4, cam_yaw) >> 4;
+    const float cos_yaw = float(MEM_H(0, cos_table + (yaw & 0xFFF) * 2)) / 16384.0f;
+    const float sin_yaw = float(MEM_H(0, cos_table + ((yaw - 0x400) & 0xFFF) * 2)) / 16384.0f;
+    const float slope = 0.40f * eb_cull_scale(rdram) * 1.1f;
+    constexpr float below = 30000.0f;
+    const int32_t pitch = MEM_W(view * 4, cam_pitch) >> 4;
+    const float cos_pitch = float(MEM_H(0, cos_table + (pitch & 0xFFF) * 2)) / 16384.0f;
+    const float sin_pitch = std::fabs(float(MEM_H(0, cos_table + ((pitch - 0x400) & 0xFFF) * 2)) / 16384.0f);
+    for (int32_t i = 0; i < count; i++) {
+        const gpr sec = list + 4 + i * 0x20;
+        float x0 = float(MEM_W(0x4, sec)), z0 = float(MEM_W(0x8, sec));
+        float x1 = float(MEM_W(0xC, sec)), z1 = float(MEM_W(0x10, sec));
+        if (bounds != 0) {
+            const gpr b = bounds + i * 0x10;
+            x0 = std::min(x0, float(MEM_W(0x0, b)));
+            x1 = std::max(x1, float(MEM_W(0x4, b)));
+            z0 = std::min(z0, float(MEM_W(0x8, b)));
+            z1 = std::max(z1, float(MEM_W(0xC, b)));
+        }
+        int32_t left = 0, right = 0, behind = 0;
+        for (int32_t c = 0; c < 4; c++) {
+            const float dx = ((c & 1) ? x1 : x0) - cam_x;
+            const float dz = ((c & 2) ? z1 : z0) - cam_z;
+            const float ahead = cos_yaw * dz - sin_yaw * dx;
+            const float across = cos_yaw * dx + sin_yaw * dz;
+            const float depth = ahead * cos_pitch + below * sin_pitch;
+            const float half = slope * depth;
+            left += across < -half;
+            right += across > half;
+            behind += depth < 0.0f;
+        }
+        if (left < 4 && right < 4 && behind < 4) {
+            MEM_W(0x1C, sec) = MEM_W(0x1C, sec) | (1 << (view * 2));
+        }
+    }
 }
 
 float eb::window_wide() {
