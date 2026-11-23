@@ -6,3 +6,4 @@ osRecvMesg_recomp = 0x8F000004;
 osEPiStartDma_recomp = 0x8F000008;
 eb_view_margin = 0x8F00000C;
 eb_desert_cull_scale = 0x8F000010;
+eb_draw_far = 0x8F000014;
