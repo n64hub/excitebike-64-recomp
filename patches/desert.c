@@ -12,6 +12,16 @@
 // window's aspect ratio over 4:3), which eb_desert_cull_scale gives in 1024ths. With the slope alone, a 32:9 window
 // still showed sky in its bottom corners, where the ground is close to the camera.
 //
+// The game drops a cell whose middle is behind the camera and more than 360 units across from it outright: at 4:3 its
+// front edge, at most a cell's half diagonal (354 units) ahead, is never in the view. A wider and taller view's bottom
+// corners reach it, and with a heading near one of the grid's axes and the camera in the right part of its cell a whole
+// cell beside the camera went missing for a moment: a sky-blue wedge in a bottom corner, whose top was the cell's front
+// edge. So a cell from 359 units behind is dropped by the same half-width as one ahead, its room less half as far
+// across as it is behind, and only one further behind outright. Over 40000 headings, places, pitches and slopes the
+// game's rule hid a cell the view saw at about 1 in 1000 at 16:9 and 1 in 70 at 32:9, and this one at none; every
+// frame of a 70 s first-person ride showed the wedge 12 times at 32:9 and once at 16:9 by the game's rule, never by
+// this one.
+//
 // A wider view needs more patches than the game keeps. des_update_patches takes each cell's patch from a cache of 250
 // (DES_NUM_PATCHES), and one not used for a frame is freed only the frame after, so a turning view holds two frames'
 // worth. Counted by des_calc_lod_grid's own rules over 3000 places and headings, turning 0x600 and moving 1400 units
@@ -264,10 +274,11 @@ RECOMP_PATCH void des_calc_lod_grid(void) {
             if (ahead < 1500) G[idx] &= 0xF1;
             if (ahead >= -359 && side >= -359 && side < 360 && ahead < 360) {
                 G[idx] |= 1;
-            } else if (ahead < 0) {
+            } else if (ahead < -359) {
                 G[idx] = 0;
             } else {
-                // Half as far across as ahead, widened with the view (ahead isn't negative here).
+                // Half as far across as ahead, widened with the view; behind the camera (ahead from -359), the room
+                // less half as far across as behind, where a cell's front edge reaches into the view's bottom corners.
                 ahead = ((ahead / 2) * scale) >> 10;
                 if (side < 0) {
                     if (side + room0 < -ahead) G[idx] &= 0xFE;

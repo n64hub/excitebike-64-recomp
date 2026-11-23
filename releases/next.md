@@ -1,0 +1,1 @@
+- Fixed a sky-blue wedge that showed for a moment in the bottom corners of the Desert's ground with Aspect Ratio Expand, where a patch of ground beside the bike went undrawn (#57)
