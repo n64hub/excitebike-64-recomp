@@ -1,0 +1,1 @@
+- Fixed Hill Climb's minimap jumping to its 4:3 place for a moment on each of the countdown's 3, 2 and 1, and for as long as the game is paused, in a wide window (Aspect Ratio Expand) (#67)
