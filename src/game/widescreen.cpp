@@ -38,6 +38,18 @@
 // RT64 widens to the window. At 32:9 the stands, barriers and track past the 4:3 frame's sides came and went with the
 // camera. The Desert's ground, drawn from a height map round the camera with no track sections, is widened the same
 // way (patches/desert.c, by eb_desert_cull_scale).
+//
+// The stadium's test is of a model's centre, with no room for its size, so it leaves out a long section or barrier
+// whose centre is past the view's side but whose end is in it. A 4:3 view had room: its half-width is 0.40 of the
+// depth ahead (a field of view of 33 degrees), the test's 0.50. Widened, two things showed through as black holes for a
+// game frame or a few, in the wide view's lower corners and at its sides (most in Rider Select and the Stunt Course,
+// as the camera turns), the frame's black where the track should be. Close to the camera arn_cull_models draws every
+// model in a box round it, 400 across, whatever its direction, and the ground the 4:3 view sees in its bottom corners
+// is in it; the wide view's corners see past it, so the box is widened across by eb_cull_scale too (us.toml's hooks),
+// as patches/desert.c widens its room with its slope. And further out the test's half-width gets half again
+// (eb_arena_cull_scale), room for a model's own size. In a minute of Rider Select's circling camera at 16:9, 22 frames
+// had such a hole touching the picture's edge and none did after; in the Stunt Course, one at 1:55 on the clock
+// still showed with the box alone and is gone with both.
 
 #include <cmath>
 #include <cstdint>
@@ -268,6 +280,12 @@ extern "C" float eb_cull_scale(uint8_t* rdram) {
         default:
             return 1.0f;
     }
+}
+
+// How much wider than the game's own the stadium's test of a model's centre is (above): eb_cull_scale with half again,
+// room for a model's own size. More models drawn cost the frame nothing to see.
+extern "C" float eb_arena_cull_scale(uint8_t* rdram) {
+    return 1.5f * eb_cull_scale(rdram);
 }
 
 // eb_cull_scale for patches/desert.c's des_calc_lod_grid, in 1024ths ($v0).

@@ -225,13 +225,27 @@ text = "{ void eb_draw_distance(uint8_t*, recomp_context*); eb_draw_distance(rdr
 
 # The race's culling widened with its view and the picture (src/game/widescreen.cpp's eb_cull_scale, 1 where the game's
 # view is kept): in arn_cull_models the half-width a stadium model's centre may lie across, half its depth ahead (and
-# half again with two screens one above the other), in $a0 where every path compares it with the centre's side; in
-# tube_cull_sections sCullSlope (0x800C9F8C), which it has just set to 0x68, or 0x9C with two screens, and which its test
-# of each section's corners reads.
+# half again with two screens one above the other), in $a0 where every path compares it with the centre's side, by
+# eb_arena_cull_scale, which adds room for a model's own size; in tube_cull_sections sCullSlope (0x800C9F8C), which it
+# has just set to 0x68, or 0x9C with two screens, and which its test of each section's corners reads.
 [[patches.hook]]
 func = "arn_cull_models"
 before_vram = 0x800242C4
-text = "{ float eb_cull_scale(uint8_t*); ctx->r4 = (int32_t)((float)(int32_t)ctx->r4 * eb_cull_scale(rdram)); }"
+text = "{ float eb_arena_cull_scale(uint8_t*); ctx->r4 = (int32_t)((float)(int32_t)ctx->r4 * eb_arena_cull_scale(rdram)); }"
+
+# And arn_cull_models' box round the camera, where a model is drawn whatever its direction (its centre within 400 across
+# and from 399 behind to 800 ahead, 800 and 799 to 1200 with two screens, the tutorial or soccer), widened across by
+# eb_cull_scale as well: its centre's side ($v1, just loaded from rot[0] at 0x38($sp)) narrowed by it for each box's
+# test, and only there.
+[[patches.hook]]
+func = "arn_cull_models"
+before_vram = 0x80024200
+text = "{ float eb_cull_scale(uint8_t*); ctx->r3 = (int32_t)((float)(int32_t)ctx->r3 / eb_cull_scale(rdram)); }"
+
+[[patches.hook]]
+func = "arn_cull_models"
+before_vram = 0x8002422C
+text = "{ float eb_cull_scale(uint8_t*); ctx->r3 = (int32_t)((float)(int32_t)ctx->r3 / eb_cull_scale(rdram)); }"
 
 [[patches.hook]]
 func = "tube_cull_sections"
