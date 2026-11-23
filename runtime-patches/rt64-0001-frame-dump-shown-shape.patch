@@ -1,8 +1,6 @@
-diff --git a/src/hle/rt64_frame_dump.h b/src/hle/rt64_frame_dump.h
-index 237948f..56b35da 100644
 --- a/src/hle/rt64_frame_dump.h
 +++ b/src/hle/rt64_frame_dump.h
-@@ -13,7 +13,10 @@
+@@ -20,7 +20,10 @@
  //   its top left corner), not the whole target, which can be larger: the targets of the frames drawn between the
  //   game's are kept at the largest size drawn (a 1692x960 target for a 1280x720 picture), and one kept from a larger
  //   frame before holds that frame's picture past the box. So every frame of a picture's size comes out the same size,
@@ -14,41 +12,41 @@ index 237948f..56b35da 100644
  //   look-alike's place, a frame drawn in parts) is a frame the frames either side of it don't explain, which only
  //   consecutive frames tell: a window's captures come tens of milliseconds apart, at a random point between the
  //   game's frames, and a person or a model looking at one doesn't read a tree standing where another one stood.
-@@ -118,6 +121,7 @@ namespace RT64 {
-             uint32_t height;
+@@ -206,6 +209,7 @@
              uint32_t rowPitch;
              bool sixteenBits;
+             uint64_t workloadId;
 +            float pixelAspect;
          } readbackFrame = {};
  
          static FrameDump *get() {
-@@ -227,7 +231,7 @@ namespace RT64 {
+@@ -318,7 +322,7 @@
                  const uint8_t *data = reinterpret_cast<const uint8_t *>(readbackBuffer->map());
                  if (data != nullptr) {
                      addFrame(readbackFrame.presentId, readbackFrame.index, readbackFrame.count, data, readbackFrame.width,
--                        readbackFrame.height, readbackFrame.rowPitch, readbackFrame.sixteenBits);
-+                        readbackFrame.height, readbackFrame.rowPitch, readbackFrame.sixteenBits, readbackFrame.pixelAspect);
+-                        readbackFrame.height, readbackFrame.rowPitch, readbackFrame.sixteenBits, readbackFrame.workloadId);
++                        readbackFrame.height, readbackFrame.rowPitch, readbackFrame.sixteenBits, readbackFrame.workloadId, readbackFrame.pixelAspect);
                      readbackBuffer->unmap();
                  }
  
-@@ -264,13 +268,13 @@ namespace RT64 {
+@@ -355,13 +359,13 @@
              commandList->copyTextureRegion(RenderTextureCopyLocation::PlacedFootprint(readbackBuffer.get(), p.textureFormat, width, height, 1, rowPitch / pixelSize),
                  RenderTextureCopyLocation::Subresource(p.texture), 0, 0, 0, &box);
              commandList->barriers(RenderBarrierStage::GRAPHICS, RenderTextureBarrier(p.texture, RenderTextureLayout::SHADER_READ));
--            readbackFrame = { presentId, index, count, width, height, rowPitch, sixteenBits };
-+            readbackFrame = { presentId, index, count, width, height, rowPitch, sixteenBits, p.vi->pixelAspect() };
+-            readbackFrame = { presentId, index, count, width, height, rowPitch, sixteenBits, workloadId };
++            readbackFrame = { presentId, index, count, width, height, rowPitch, sixteenBits, workloadId, p.vi->pixelAspect() };
          }
  
          // A presented frame's pixels, as a readback of its color target holds them: rows rowPitch bytes apart, 4
 -        // channels of 8 or of 16 bits. Present thread.
 +        // channels of 8 or of 16 bits, each pixel pixelAspect as wide on the screen as it is tall. Present thread.
          void addFrame(uint64_t presentId, uint32_t index, uint32_t count, const uint8_t *data, uint32_t width, uint32_t height,
--            uint32_t rowPitch, bool sixteenBits)
-+            uint32_t rowPitch, bool sixteenBits, float pixelAspect)
+-            uint32_t rowPitch, bool sixteenBits, uint64_t workloadId)
++            uint32_t rowPitch, bool sixteenBits, uint64_t workloadId, float pixelAspect)
          {
              if (!started.exchange(true)) {
                  start = std::chrono::steady_clock::now();
-@@ -280,9 +284,14 @@ namespace RT64 {
+@@ -371,9 +375,14 @@
                  return;
              }
  
@@ -65,7 +63,7 @@ index 237948f..56b35da 100644
              Frame frame;
              frame.header.magic = Magic;
              frame.header.width = outWidth;
-@@ -293,14 +302,16 @@ namespace RT64 {
+@@ -384,14 +393,16 @@
              frame.header.timeMs = nowMs();
              frame.rgb.resize(size_t(outWidth) * outHeight * 3);
              const uint32_t pixelSize = sixteenBits ? 8 : 4;
