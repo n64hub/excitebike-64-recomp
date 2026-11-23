@@ -31,9 +31,17 @@
 // The finish's checkerboard, which event_draw_hud draws over the winner's view as fill rectangles, makes no piece: it
 // is drawn again over the whole view and out to the window's sides by src/game/checkerboard.cpp, and as a piece
 // across the middle it held the HUD's pieces near it (the times, the minimap, the gauge) in the 4:3 frame.
+//
+// The countdown (event_draw_countdown) is one texture rectangle centred on the view, READY, 3, 2, 1 and GO!, each
+// grown or shrunk a frame at a time: GO! grows from half its picture's size to 2.75 times it over its 15 frames, and
+// in its last it lay within a few pixels of every corner's piece, so for that frame the minimap, the place, the times
+// and the gauge were placed as one piece across the middle, at their 4:3 places, the gauge's needle (a model) alone
+// at the side. So a rectangle centred on the screen's middle and wider than a quarter of it is a piece of its own that
+// nothing joins, and stays in the middle: a glyph of a line of text is never that wide.
 
 #include <cstdint>
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 
 #define F3DEX_GBI_2
@@ -262,6 +270,7 @@ struct Cmd {
 struct Piece {
     Box box;
     bool models = false;
+    bool alone = false; // a wide rectangle centred on the middle (the countdown's): joins no other piece
     uint32_t origin = G_EX_ORIGIN_NONE;
 };
 
@@ -474,14 +483,18 @@ void anchor(uint32_t start, uint32_t end) {
         }
         // Rectangles join the piece before them when they lie near it. A model (the gauge's needle) is a piece of its
         // own: Mario Golf's small models lay within a few pixels of each other, and joined made one piece across the
-        // middle.
-        if (pieces > 0 && !model && !g_pieces[pieces - 1].models && g_pieces[pieces - 1].box.near(box)) {
+        // middle. So is the countdown's rectangle (the header).
+        const bool alone = !model && box.x1 - box.x0 > SCREEN_WIDTH / 4 &&
+                           std::abs((box.x0 + box.x1) * 0.5f - float(SCREEN_MIDDLE)) <= 1.0f;
+        if (pieces > 0 && !model && !alone && !g_pieces[pieces - 1].models && !g_pieces[pieces - 1].alone &&
+            g_pieces[pieces - 1].box.near(box)) {
             g_pieces[pieces - 1].box.add(box);
             continue;
         }
         g_pieces[pieces] = Piece{};
         g_pieces[pieces].box = box;
         g_pieces[pieces].models = model;
+        g_pieces[pieces].alone = alone;
         cmd.piece = pieces++;
     }
     if (pieces == 0) {
@@ -508,8 +521,8 @@ void anchor(uint32_t start, uint32_t end) {
             for (int a = 0; a < pieces; a++) {
                 for (int b = a + 1; b < pieces; b++) {
                     const int ra = root(a), rb = root(b);
-                    if (ra == rb || g_pieces[a].models || g_pieces[b].models ||
-                        !g_group_box[ra].near(g_group_box[rb])) {
+                    if (ra == rb || g_pieces[a].models || g_pieces[b].models || g_pieces[a].alone ||
+                        g_pieces[b].alone || !g_group_box[ra].near(g_group_box[rb])) {
                         continue;
                     }
                     g_group[rb] = ra;
