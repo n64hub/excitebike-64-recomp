@@ -1,1 +1,2 @@
+- Fixed a large flat olive or tan shape that could flash over the starting gate for one frame as a race's opening wipe uncovers it, from a rider's ponytail drawn before the game had placed it (#59)
 - Fixed Excite 3D's stands, wall, grass and track vanishing at the sides of a wide window (Aspect Ratio Expand), where the sky's blue showed (#66)
