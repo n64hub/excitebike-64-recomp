@@ -1,0 +1,1 @@
+- Fixed a large flat olive or tan shape that could flash over the starting gate for one frame as a race's opening wipe uncovers it, from a rider's ponytail drawn before the game had placed it (#59)
