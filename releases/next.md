@@ -1,1 +1,4 @@
+- On the outdoor tracks, Draw Distance's Far (Settings, General, on by default) draws the ground, cliffs, fences, banners and trees ahead that popped in as you rode, out to the far clip; Original keeps the game's own (#63)
 - Fixed a large flat olive or tan shape that could flash over the starting gate for one frame as a race's opening wipe uncovers it, from a rider's ponytail drawn before the game had placed it (#59)
+- Fixed Excite 3D's stands, wall, grass and track vanishing at the sides of a wide window (Aspect Ratio Expand), where the sky's blue showed (#66)
+- Fixed Hill Climb's minimap jumping to its 4:3 place for a moment on each of the countdown's 3, 2 and 1, and for as long as the game is paused, in a wide window (Aspect Ratio Expand) (#67)

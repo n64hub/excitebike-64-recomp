@@ -37,11 +37,11 @@
 # as the camera pans (1.31 s in a row), the credits' dark forest at the view's side at 32:9 (0.11 s). The editor's
 # track view is black round the arena, out to the panel at the window's left edge (at 32:9, 72 of 144 rows black to
 # 109 pixels out from the view's side, held as long as the editor shows).
-# Two steps go past what keys can do in a few seconds. A race's end: the computer drives the player's bike home over
-# one lap, the word at 0x800E4848 written as 0x01000000 (gRiders[0].isCpu, which the game sets itself as a player
-# finishes, and the three bytes after it cleared) and the event's laps, the high half of 0x800F0F68, as 1 beside its 6
-# riders, both once the race is under way (the event's state at 0x800F0F48 is 5), since its start sets the laps; the
-# finish then waits for A. And the credits, left by Start after 17 s.
+# Three steps go past what keys can do in a few seconds. Excite 3D, unlocked (its section says how). A race's end: the
+# computer drives the player's bike home over one lap, the word at 0x800E4848 written as 0x01000000 (gRiders[0].isCpu,
+# which the game sets itself as a player finishes, and the three bytes after it cleared) and the event's laps, the high
+# half of 0x800F0F68, as 1 beside its 6 riders, both once the race is under way (the event's state at 0x800F0F48 is
+# 5), since its start sets the laps; the finish then waits for A. And the credits, left by Start after 17 s.
 
 # The boot: the Left Field logo, the Controller Paks' notice (left by Start), the legal screen, the title over its
 # attract race, and the main menu held 30 s: its sponsor logos come in 7-10 s after it shows and cross it diagonally,
@@ -223,60 +223,87 @@
 192 checked middle
 193.5 shot 36_stunt_main_menu
 
+# Excite 3D, unlocked by a poke of its item's flags (gSpecialTracksItems[5], SCREEN_ITEM_LOCKED cleared) once Special
+# Tracks shows, through Rider Select to its side view (the Camera button, C-up on T, once the race is under way),
+# ridden 9 s: the stands, the wall and the track out to a wide window's sides.
+193.5 until 0x800F0714 0xFFFFFFFF 0x3 10 Down
+194.5 until 0x800F5164 0xFFFFFFFF 0x800CE0B0 10 Space
+195.5 poke 0x800CDD08 0x00000000
+196 until 0x800F0718 0xFFFFFFFF 0x5 10 Down
+197 unchecked middle
+197 until 0x800C3308 0xFFFFFFFF 0x800C32B4 60 Space
+202 shot 36_excite3d_start
+202 until 0x800F0F48 0xFFFFFFFF 0x5 30 Space
+202.5 down Space
+203 key T
+205.5 shot 36_excite3d
+208.5 shot 36_excite3d2
+211.5 shot 36_excite3d3
+211.5 up Space
+212 until 0x800E40B0 0xFFFFFFFF 0x1 10 Enter
+213.5 shot 36_excite3d_pause
+213.5 until 0x800E4108 0xFFFFFFFF 0x3 10 Down
+214 until 0x800E40B0 0xFFFFFFFF 0x4 10 Space
+214.5 until 0x800E4108 0xFFFFFFFF 0x0 10 Up
+215 until 0x800E4098 0xFFFFFFFF 0x6 10 Space
+215 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 30
+215 checked middle
+216.5 shot 36_excite3d_main_menu
+
 # Options: Controller Settings, the Records turned a page, and the credits, a race on The Gravel Pit under them.
-193.5 until 0x800F0714 0xFFFFFFFF 0x4 10 Down
-194.5 until 0x800F5164 0xFFFFFFFF 0x800CE058 10 Space
-196 shot 37_options
-196 until 0x800F0B58 0xFFFF0000 0x30000 10 Down
-197 until 0x800F0B58 0xFFFF0000 0x40000 10 Right
-198 until 0x800F5164 0xFFFFFFFF 0x800CE268 10 Space
-199.5 shot 38_controller_settings
-199.5 until 0x800F5164 0xFFFFFFFF 0x800CE058 10 Shift
-201 until 0x800F0B58 0xFFFF0000 0x60000 10 Down
-202 until 0x800F0B58 0xFFFF0000 0x50000 10 Left
-203 until 0x800F5164 0xFFFFFFFF 0x800CE23C 10 Space
-205 shot 39_records
-205 key Right
-207 shot 40_records_page
-207 until 0x800F5164 0xFFFFFFFF 0x800CE058 10 Shift
-208.5 until 0x800F0B58 0xFFFF0000 0x60000 10 Right
-209.5 until 0x800C3308 0xFFFFFFFF 0x800C32B4 30 Space
-209.5 unchecked middle,black
-217.5 shot 41_credits
-225.5 shot 42_credits2
-226.5 until 0x800F5164 0xFFFFFFFF 0x800CE058 30 Enter
-226.5 checked middle,black
-228 shot 43_options_back
-228 key Shift
+216.5 until 0x800F0714 0xFFFFFFFF 0x4 10 Down
+217.5 until 0x800F5164 0xFFFFFFFF 0x800CE058 10 Space
+219 shot 37_options
+219 until 0x800F0B58 0xFFFF0000 0x30000 10 Down
+220 until 0x800F0B58 0xFFFF0000 0x40000 10 Right
+221 until 0x800F5164 0xFFFFFFFF 0x800CE268 10 Space
+222.5 shot 38_controller_settings
+222.5 until 0x800F5164 0xFFFFFFFF 0x800CE058 10 Shift
+224 until 0x800F0B58 0xFFFF0000 0x60000 10 Down
+225 until 0x800F0B58 0xFFFF0000 0x50000 10 Left
+226 until 0x800F5164 0xFFFFFFFF 0x800CE23C 10 Space
+228 shot 39_records
+228 key Right
+230 shot 40_records_page
+230 until 0x800F5164 0xFFFFFFFF 0x800CE058 10 Shift
+231.5 until 0x800F0B58 0xFFFF0000 0x60000 10 Right
+232.5 until 0x800C3308 0xFFFFFFFF 0x800C32B4 30 Space
+232.5 unchecked middle,black
+240.5 shot 41_credits
+248.5 shot 42_credits2
+249.5 until 0x800F5164 0xFFFFFFFF 0x800CE058 30 Enter
+249.5 checked middle,black
+251 shot 43_options_back
+251 key Shift
 
 # Custom Tracks: Go To Editor, its Edit menu, a straight added, turned and placed, and the track moved.
-228 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 10 Shift
-229.5 until 0x800F0714 0xFFFFFFFF 0x5 10 Down
-230.5 key Space
-232 shot 44_custom
-232 key Down
-233 until 0x800C3308 0xFFFFFFFF 0x800C32D0 15 Space
-233 unchecked hud,black
-236 shot 45_editor
-236 key Space
-237.5 shot 46_editor_edit
-237.5 key Space
-239.5 shot 47_editor_straight
-241.5 key Right
-243 key Right
-244.5 shot 48_editor_turned
-245 key Space
-247 shot 49_editor_placed
-247 key Shift
-249 shot 50_editor_back
-249 until 0x800CF4E0 0x0000FFFF 0x4 10 Down
-250 shot 51_editor_move_cursor
-250 key Space
-252 shot 52_editor_move_track
-253 down Right
-256 up Right
-256 shot 53_editor_moved
-257 key Space
-259 shot 54_editor_after_move
-268 shot 55_editor_held
-269 end
+251 until 0x800F5164 0xFFFFFFFF 0x800CE0DC 10 Shift
+252.5 until 0x800F0714 0xFFFFFFFF 0x5 10 Down
+253.5 key Space
+255 shot 44_custom
+255 key Down
+256 until 0x800C3308 0xFFFFFFFF 0x800C32D0 15 Space
+256 unchecked hud,black
+259 shot 45_editor
+259 key Space
+260.5 shot 46_editor_edit
+260.5 key Space
+262.5 shot 47_editor_straight
+264.5 key Right
+266 key Right
+267.5 shot 48_editor_turned
+268 key Space
+270 shot 49_editor_placed
+270 key Shift
+272 shot 50_editor_back
+272 until 0x800CF4E0 0x0000FFFF 0x4 10 Down
+273 shot 51_editor_move_cursor
+273 key Space
+275 shot 52_editor_move_track
+276 down Right
+279 up Right
+279 shot 53_editor_moved
+280 key Space
+282 shot 54_editor_after_move
+291 shot 55_editor_held
+292 end
