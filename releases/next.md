@@ -1,1 +1,2 @@
 - On the outdoor tracks, Draw Distance's Far (Settings, General, on by default) draws the ground, cliffs, fences, banners and trees ahead that popped in as you rode, out to the far clip; Original keeps the game's own (#63)
+- Fixed a large flat olive or tan shape that could flash over the starting gate for one frame as a race's opening wipe uncovers it, from a rider's ponytail drawn before the game had placed it (#59)
