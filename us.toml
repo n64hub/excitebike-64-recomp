@@ -252,6 +252,14 @@ func = "tube_cull_sections"
 before_vram = 0x8002692C
 text = "{ float eb_cull_scale(uint8_t*); MEM_W(0, (gpr)(int32_t)0x800C9F8C) = (int32_t)((float)MEM_W(0, (gpr)(int32_t)0x800C9F8C) * eb_cull_scale(rdram)); }"
 
+# Excite 3D's side view, which tube_cull_sections culls to a strip of sections round the rider's instead: in
+# tube_update_view, once tube_cull_sections returns and before the sections' bits are copied to their objects,
+# eb_excite3d_cull adds the sections within the widened view's sides (the view in $s0).
+[[patches.hook]]
+func = "tube_update_view"
+before_vram = 0x80024EF8
+text = "{ void eb_excite3d_cull(uint8_t*, int32_t); eb_excite3d_cull(rdram, (int32_t)ctx->r16); }"
+
 # The track editor out to the window's edges (src/game/editor.cpp): at edit_draw's entry, with pgdl ($a2), and before it
 # returns, after its last store of gdl ($fp) to *pgdl.
 [[patches.hook]]
