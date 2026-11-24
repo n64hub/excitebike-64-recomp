@@ -1,1 +1,2 @@
 - Fixed a large flat olive or tan shape that could flash over the starting gate for one frame as a race's opening wipe uncovers it, from a rider's ponytail drawn before the game had placed it (#59)
+- Fixed Hill Climb's minimap jumping to its 4:3 place for a moment on each of the countdown's 3, 2 and 1, and for as long as the game is paused, in a wide window (Aspect Ratio Expand) (#67)

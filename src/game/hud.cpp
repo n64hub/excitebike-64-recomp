@@ -14,19 +14,25 @@
 // viewport, the vertices, the display lists they call) to know where on the screen each draws, and they are split into
 // pieces: a rectangle joins the piece before it when it lies within a few pixels of it, so a number stays with its
 // label and the minimap with its riders' dots, and each model is a piece of its own; then pieces of rectangles that
-// lie near each other are placed as one, since a line of text is drawn out of order. A piece across the middle of the
-// screen, or near it, stays where the game draws it; one left of it is placed from the left side and one right of it
-// from the right (gEXSetRectAlign for its rectangles, gEXSetViewportAlign and the viewport again for its models). A
-// piece placed from a side draws under the game's scissor widened to the picture: the view spans the screen's width
-// (src/game/widescreen.cpp), so the 3D fills the picture and covers what the HUD drew the frame before. A piece left
-// in the middle keeps the game's own scissor, which RT64 stretches with a rectangle that spans its width.
+// lie near each other are placed as one, since a line of text is drawn out of order. Pieces join only those drawn under
+// the same scissor, which the game sets before each part of its HUD: render_draw_race before event_draw_hud (once the
+// minimap is drawn), and event_draw_hud before its pause menus, whose lines are centred on the view. A line of text is
+// drawn in one font_render, under one scissor. Hill Climb's minimap reaches past the screen's first third, so the pause
+// menu's lines came within a few pixels of it, and so did each of 3, 2 and 1 in its two frames between 118 and 128
+// pixels wide (at 512): the minimap was placed with them in the middle, at its 4:3 place, the whole pause and two frames
+// of each number. A piece across the middle of the screen, or near it, stays where the game draws it; one left of it is
+// placed from the left side and one right of it from the right (gEXSetRectAlign for its rectangles, gEXSetViewportAlign
+// and the viewport again for its models). A piece placed from a side draws under the game's scissor widened to the
+// picture: the view spans the screen's width (src/game/widescreen.cpp), so the 3D fills the picture and covers what the
+// HUD drew the frame before. A piece left in the middle keeps the game's own scissor, which RT64 stretches with a
+// rectangle that spans its width.
 //
 // The screen is 512x240, or 640x480 in the high-resolution mode, so its sizes are read from the game (gScreenWidth)
 // each frame. The commands go to buffers of this file's at 0x80C00000: RDRAM past the 8 MB the game uses (all of it,
 // with the Expansion Pak) and below the mods' (0x81000000, which the runtime's heap follows), where the patches' own
 // data ends at 0x80801040. The first command the game wrote is replaced by a branch to the buffer, which branches back
 // to where the game goes on. Eight buffers in turn, since the renderer may read a list a frame or more after the game
-// sends it, and the game keeps two lists. The pause menu and the menus are drawn elsewhere and stay in the middle.
+// sends it, and the game keeps two lists. The menus are drawn elsewhere and stay in the middle.
 //
 // The finish's checkerboard, which event_draw_hud draws over the winner's view as fill rectangles, makes no piece: it
 // is drawn again over the whole view and out to the window's sides by src/game/checkerboard.cpp, and as a piece
@@ -271,6 +277,7 @@ struct Piece {
     Box box;
     bool models = false;
     bool alone = false; // a wide rectangle centred on the middle (the countdown's): joins no other piece
+    int scissor = 0; // how many scissors the game set before it: a piece joins only those drawn under the same one
     uint32_t origin = G_EX_ORIGIN_NONE;
 };
 
@@ -428,11 +435,15 @@ void anchor(uint32_t start, uint32_t end) {
         g_cmds[i].w1 = rd_w(start + i * 8 + 4);
     }
     uint32_t board_end = 0;
+    int scissors = 0;
     for (uint32_t i = 0; i < count; i++) {
         Cmd& cmd = g_cmds[i];
         cmd.piece = -1;
         cmd.board_end = 0;
         cmd.split = 0;
+        if ((cmd.w0 >> 24) == G_SETSCISSOR) {
+            scissors++;
+        }
         // The checkerboard makes no piece: it is drawn over the whole view (below), and as a piece across the middle
         // it took the HUD's pieces near it there with it.
         if (i >= board_end && (cmd.board_end = board_at(i, count)) != 0) {
@@ -481,13 +492,13 @@ void anchor(uint32_t start, uint32_t end) {
             cmd.piece = pieces++;
             continue;
         }
-        // Rectangles join the piece before them when they lie near it. A model (the gauge's needle) is a piece of its
-        // own: Mario Golf's small models lay within a few pixels of each other, and joined made one piece across the
-        // middle. So is the countdown's rectangle (the header).
+        // Rectangles join the piece before them when they lie near it under the same scissor (the header). A model
+        // (the gauge's needle) is a piece of its own: Mario Golf's small models lay within a few pixels of each other,
+        // and joined made one piece across the middle. So is the countdown's rectangle (the header).
         const bool alone = !model && box.x1 - box.x0 > SCREEN_WIDTH / 4 &&
                            std::abs((box.x0 + box.x1) * 0.5f - float(SCREEN_MIDDLE)) <= 1.0f;
         if (pieces > 0 && !model && !alone && !g_pieces[pieces - 1].models && !g_pieces[pieces - 1].alone &&
-            g_pieces[pieces - 1].box.near(box)) {
+            g_pieces[pieces - 1].scissor == scissors && g_pieces[pieces - 1].box.near(box)) {
             g_pieces[pieces - 1].box.add(box);
             continue;
         }
@@ -495,6 +506,7 @@ void anchor(uint32_t start, uint32_t end) {
         g_pieces[pieces].box = box;
         g_pieces[pieces].models = model;
         g_pieces[pieces].alone = alone;
+        g_pieces[pieces].scissor = scissors;
         cmd.piece = pieces++;
     }
     if (pieces == 0) {
@@ -503,9 +515,9 @@ void anchor(uint32_t start, uint32_t end) {
     if (!g_intro.on) {
         // The game draws a line of text a glyph's texture at a time, not left to right: the finish's "Press START
         // to Continue" drew its i's and its e after the rest, and alone they were placed from the right side and
-        // "Press" from the left. So pieces of rectangles that lie near each other, whatever order they were drawn in,
-        // are placed as one, by the box of them all (a HUD makes a few dozen pieces; past a few hundred each is placed
-        // alone, as the join below is a pass over every pair).
+        // "Press" from the left. So pieces of rectangles that lie near each other under the same scissor, whatever
+        // order they were drawn in, are placed as one, by the box of them all (a HUD makes a few dozen pieces; past a
+        // few hundred each is placed alone, as the join below is a pass over every pair).
         for (int p = 0; p < pieces; p++) {
             g_group[p] = p;
             g_group_box[p] = g_pieces[p].box;
@@ -522,7 +534,8 @@ void anchor(uint32_t start, uint32_t end) {
                 for (int b = a + 1; b < pieces; b++) {
                     const int ra = root(a), rb = root(b);
                     if (ra == rb || g_pieces[a].models || g_pieces[b].models || g_pieces[a].alone ||
-                        g_pieces[b].alone || !g_group_box[ra].near(g_group_box[rb])) {
+                        g_pieces[b].alone || g_pieces[a].scissor != g_pieces[b].scissor ||
+                        !g_group_box[ra].near(g_group_box[rb])) {
                         continue;
                     }
                     g_group[rb] = ra;
