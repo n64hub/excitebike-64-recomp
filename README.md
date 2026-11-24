@@ -25,8 +25,9 @@ window. In every window, 4:3 included, each race view fills its part of the scre
 black border the console drew round it (which a TV's edge hid), the HUD where the game puts it. Time trials' ghosts are
 kept on a Controller Pak in port 1, `saves/controllerpak_1.mpk`, beside its Rumble Pak. The General tab's Draw Distance,
 Far by default, draws the stadium's far jumps and walls lit to the other side of the arena, where the game fades them to
-black past a distance (Original). Not played yet: saving a custom
-track and racing it (the editor opens, lays track and moves it).
+black past a distance (Original), and on the outdoor tracks the ground, fences, banners and trees ahead that the game
+leaves out until the camera reaches a spot that names them, so they no longer pop in ahead or at a wide window's
+sides. Not played yet: saving a custom track and racing it (the editor opens, lays track and moves it).
 
 It plays in a browser too, at [n64hub.com/excitebike-64](https://n64hub.com/excitebike-64/) (`docs/web.md`), and the
 desktop builds for Windows and Linux are on the [Releases](https://github.com/n64hub/excitebike-64-recomp/releases)
