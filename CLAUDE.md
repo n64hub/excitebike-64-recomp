@@ -27,7 +27,8 @@ This repo is the game: its recompilation, the patches over it, the desktop build
   (`src/game/checkerboard.cpp`), the General tab's Draw Distance (`src/game/draw_distance.cpp`, and
   outdoors `patches/tube_far.c`), the boot's logos and notices kept at 4:3 in it (`src/game/splash.cpp`), the track
   editor out to its edges (`src/game/editor.cpp`), a far rider's ponytail on a race's first frames
-  (`patches/ponytail.c`), and a stack trace on a crash, on Windows and Linux (`src/main/crash_trace.cpp`).
+  (`patches/ponytail.c`), the riders' shadows on the ground between frames (`patches/shadow.c`), and a stack trace
+  on a crash, on Windows and Linux (`src/main/crash_trace.cpp`).
 - `lib/`: `excitebike64` (the decomp, for `syms/` and the patches' headers), `ultralib` (the libultra the decomp builds
   against, for its headers), upstream `rt64`, `N64ModernRuntime` and `RecompFrontend` at the commits
   N64Recomp-browser's web forks are built on, and `N64Recomp-browser` at a release tag. The web support every recomp's
