@@ -1,1 +1,0 @@
-- In a window wider than 4:3, Rider Select's stats card (Landing, Cornering, Jumping, Turbo) slides on out past the window's right edge as holding Z opens the rider's bio, and back in as Z is released, instead of being cut off by a straight edge at the 4:3 picture's side with the track going on beside it (#78)
