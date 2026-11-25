@@ -28,15 +28,18 @@
 # race, which widens, as a HUD left at 4:3 would.
 # The main menu's hold is left out of the middle as well: its sponsor logos are placed by the window's width, so each
 # run's logos cross the 4:3 middle at their own places and times.
-# The track editor is left out of it too: its menu panel moves out to the window's left, but the 3D view beside it
-# holds still between the camera's moves, so the check finds pixels fixed all along the way the panel goes (98% at
-# its 4:3 place at 16:9, with no place out from it of its own) and reads it as a HUD left at 4:3. The replay, the
-# credits' race and the track editor are left out of black at the sides (`unchecked black`): each has near-black with
-# something drawn at its edge, which the check can't tell from black stopping short. The replay and the credits' race
-# are races, so each window's is its own: the replay's stadium roof with a grey post at the 16:9 window's right edge
-# as the camera pans (1.31 s in a row), the credits' dark forest at the view's side at 32:9 (0.11 s). The editor's
-# track view is black round the arena, out to the panel at the window's left edge (at 32:9, 72 of 144 rows black to
-# 109 pixels out from the view's side, held as long as the editor shows).
+# The track editor is left out of it too: its menu panel moves out to the window's left, but the 3D view beside it holds
+# still between the camera's moves, so the check finds pixels fixed all along the way the panel goes (98% at its 4:3
+# place at 16:9, with no place out from it of its own) and reads it as a HUD left at 4:3. The replay, the credits' race,
+# the track editor and the Season's first race's intro are left out of black at the sides (`unchecked black`): each has
+# near-black with something drawn at its edge, which the check can't tell from black stopping short. The replay and the
+# credits' race are races, so each window's is its own: the replay's stadium roof with a grey post at the 16:9 window's
+# right edge as the camera pans (1.31 s in a row), the credits' dark forest at the view's side at 32:9 (0.11 s). The
+# editor's track view is black round the arena, out to the panel at the window's left edge (at 32:9, 72 of 144 rows
+# black to 109 pixels out from the view's side, held as long as the editor shows). The Season's intro, a list of its
+# first round's tracks till A ends it, has dark boxes that cross the view's right side, so rows read black to 11 pixels
+# out at 16:9 (7 at 32:9) with the stands lit past them, from its wipe in to its fade out (1.08 s at 16:9); its fade to
+# black covers the whole window, and the race's wipe in after the intro is checked.
 # Three steps go past what keys can do in a few seconds. Excite 3D, unlocked (its section says how). A race's end: the
 # computer drives the player's bike home over one lap, the word at 0x800E4848 written as 0x01000000 (gRiders[0].isCpu,
 # which the game sets itself as a player finishes, and the three bytes after it cleared) and the event's laps, the high
@@ -108,10 +111,11 @@
 90 until 0x800F0714 0xFFFFFFFF 0x0 10 Up
 91 key Space
 92.5 shot 16_season
-92.5 unchecked middle
+92.5 unchecked middle,black
 92.5 until 0x800C3308 0xFFFFFFFF 0x800C32B4 60 Space
 92.5 until 0x800E4098 0xFFFFFFFF 0x1 30
 93.5 until 0x800F0710 0x80 0x0 15 Space
+93.5 checked black
 95.5 shot 17_season_countdown
 95.5 until 0x800F0F48 0xFFFFFFFF 0x5 30 Space
 96 down Space
