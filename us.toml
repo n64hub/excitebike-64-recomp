@@ -339,6 +339,13 @@ func = "shell_draw_screen"
 before_vram = 0x8007DEC4
 text = "{ void eb_logo_end(uint8_t*, uint32_t); eb_logo_end(rdram, (uint32_t)ctx->r2); }"
 
+# Rider Select's stats card out to a wide window's sides (src/game/stats_card.cpp): just after shell_draw_screen
+# stores the second word of the scissor it sets for each player's view, the command's address still in $a2.
+[[patches.hook]]
+func = "shell_draw_screen"
+before_vram = 0x80085EC0
+text = "{ void eb_stats_card_scissor(uint8_t*, uint32_t); eb_stats_card_scissor(rdram, (uint32_t)ctx->r6); }"
+
 # The boot's logos and notices kept at 4:3 (src/game/splash.cpp): on both sides of the render_draw_image call that
 # draws the screen's background in shell_draw, the list in $a3 and the screen in $s7 before it, the list's end in $v0
 # after.
