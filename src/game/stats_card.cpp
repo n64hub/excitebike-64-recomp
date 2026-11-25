@@ -2,7 +2,7 @@
 // draws each player's name, the stats card (its frame, the labels Landing, Cornering, Jumping and Turbo, and their
 // bars) and, with one player, the bio, under a scissor of the player's view (shell_draw_screen's
 // SCREEN_TYPE_RIDER_SELECT). With one player, holding Z slides the bio down and the card right by up to 235 of the
-// game's units as the bio opens, past the screen's right edge, which the scissor cuts it at; releasing Z slides it back.
+// screen's 320 pixels as the bio opens, past the screen's right edge, which the scissor cuts it at; releasing Z slides it back.
 // The scene behind reaches the window's sides (src/game/widescreen.cpp), so in a window wider than 4:3 the card was cut
 // off at the 4:3 picture's right edge with the scene going on beside it, instead of sliding on toward the window's.
 //
