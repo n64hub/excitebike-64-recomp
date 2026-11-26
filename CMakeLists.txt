@@ -127,6 +127,12 @@ set(RT64_MOVE_UNPAIRED_WITH_CAMERA ON)
 # HUD (#62). RT64_RECT_OWN_PIXEL_GRID (off on a desktop build and on with Emscripten) steps a texrect's texture from its
 # own edges at its own scale.
 set(RT64_RECT_OWN_PIXEL_GRID ON)
+# The NES picture's playfield scrolls as a row of those rects under the scissor's right edge, and RT64's Fix LR with
+# Scissor moved the last one's right edge onto the scissor's whenever it came within a pixel of it: that tile was drawn
+# 9 pixels wide, then 7, and the frames between drew it stretched, a shimmer at the picture's top right (#87).
+# RT64_FIX_LR_SPANNING_RECTS (off on a desktop build and on with Emscripten) moves an edge only for a rect that spans the
+# scissor across: in frame dumps of the NES race, about 11000 stretched last tiles in 766 of 2258 frames went to none.
+set(RT64_FIX_LR_SPANNING_RECTS ON)
 # Up to four players, each a port of their own (src/main/main.cpp, get_connected_device_info): the game turns
 # RecompFrontend's single-player mode off, and plays as single-player mode until players are assigned, as with
 # Emscripten, so a player alone needn't assign their pad or keyboard first. And until then each pad plays a port of its
