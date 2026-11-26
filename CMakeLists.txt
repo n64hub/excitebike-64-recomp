@@ -127,6 +127,12 @@ set(RT64_MOVE_UNPAIRED_WITH_CAMERA ON)
 # HUD (#62). RT64_RECT_OWN_PIXEL_GRID (off on a desktop build and on with Emscripten) steps a texrect's texture from its
 # own edges at its own scale.
 set(RT64_RECT_OWN_PIXEL_GRID ON)
+# The NES picture's playfield scrolls as a row of those rects under the scissor's right edge, and RT64's Fix LR with
+# Scissor moved the last one's right edge onto the scissor's whenever it came within a pixel of it: that tile was drawn
+# 9 pixels wide, then 7, and the frames between drew it stretched, a shimmer at the picture's top right (#87).
+# RT64_FIX_LR_SPANNING_RECTS (off on a desktop build and on with Emscripten) moves an edge only for a rect that spans the
+# scissor across: in frame dumps of the NES race, about 11000 stretched last tiles in 766 of 2258 frames went to none.
+set(RT64_FIX_LR_SPANNING_RECTS ON)
 # The place in the top right (3RD, 6TH) grows and shrinks as it changes, its glyphs drawn as rects that step over more
 # texels a pixel than they cover. RT64 draws such a scaled rect upscaled (Upscale 2D), and its last native pixel at a
 # high resolution stepped a pixel past the last texel the console samples, into the next glyph on the font page: a thin
