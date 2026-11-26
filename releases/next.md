@@ -1,0 +1,2 @@
+- The place in the top right (3RD, 6TH) no longer draws thin white lines down its right side and along its bottom while it grows and shrinks as your place changes (#88)
+- Original Excitebike, under Special Tracks, scrolls its playfield whole: no band of the track sliding back and forth by a tile, and no shimmer at the picture's top right, between the game's own frames (#87)
