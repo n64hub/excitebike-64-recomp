@@ -124,8 +124,9 @@ set(RT64_MOVE_UNPAIRED_WITH_CAMERA ON)
 # 16th of each never filled, and stretches it across a wide window. A texrect stretched so starts partway along a native
 # pixel of the screen's square grid, and its first high-res columns took the texel before its first: every tile drew a
 # green or black line of that 16th texel down its left edge, through the title's letters, the crowd, the track and the
-# HUD (#62). RT64_RECT_OWN_PIXEL_GRID (off on a desktop build and on with Emscripten) steps a texrect's texture from its
-# own edges at its own scale.
+# HUD (#62). RT64_RECT_OWN_PIXEL_GRID (off on a desktop build and on with Emscripten) steps a texrect's texture a native
+# pixel at a time from its own first texcoords, as the console does. Stepped on a grid of the screen's pixels, it drifted
+# from the rect, placed on whole pixels: the time HUD drew a line down each glyph's left at 1400x720 (#68).
 set(RT64_RECT_OWN_PIXEL_GRID ON)
 # The NES picture's playfield scrolls as a row of those rects under the scissor's right edge, and RT64's Fix LR with
 # Scissor moved the last one's right edge onto the scissor's whenever it came within a pixel of it: that tile was drawn
