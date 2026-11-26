@@ -124,9 +124,23 @@ set(RT64_MOVE_UNPAIRED_WITH_CAMERA ON)
 # 16th of each never filled, and stretches it across a wide window. A texrect stretched so starts partway along a native
 # pixel of the screen's square grid, and its first high-res columns took the texel before its first: every tile drew a
 # green or black line of that 16th texel down its left edge, through the title's letters, the crowd, the track and the
-# HUD (#62). RT64_RECT_OWN_PIXEL_GRID (off on a desktop build and on with Emscripten) steps a texrect's texture from its
-# own edges at its own scale.
+# HUD (#62). RT64_RECT_OWN_PIXEL_GRID (off on a desktop build and on with Emscripten) steps a texrect's texture a native
+# pixel at a time from its own first texcoords, as the console does. Stepped on a grid of the screen's pixels, it drifted
+# from the rect, placed on whole pixels: the time HUD drew a line down each glyph's left at 1400x720 (#68).
 set(RT64_RECT_OWN_PIXEL_GRID ON)
+# The NES picture's playfield scrolls as a row of those rects under the scissor's right edge, and RT64's Fix LR with
+# Scissor moved the last one's right edge onto the scissor's whenever it came within a pixel of it: that tile was drawn
+# 9 pixels wide, then 7, and the frames between drew it stretched, a shimmer at the picture's top right (#87).
+# RT64_FIX_LR_SPANNING_RECTS (off on a desktop build and on with Emscripten) moves an edge only for a rect that spans the
+# scissor across: in frame dumps of the NES race, about 11000 stretched last tiles in 766 of 2258 frames went to none.
+set(RT64_FIX_LR_SPANNING_RECTS ON)
+# The place in the top right (3RD, 6TH) grows and shrinks as it changes, its glyphs drawn as rects that step over more
+# texels a pixel than they cover. RT64 draws such a scaled rect upscaled (Upscale 2D), and its last native pixel at a
+# high resolution stepped a pixel past the last texel the console samples, into the next glyph on the font page: a thin
+# white line down each glyph's right and along its bottom while the place changed (#88).
+# RT64_UPSCALED_RECT_LAST_TEXEL (off on a desktop build and on with Emscripten) keeps an upscaled rect to the texels
+# the console samples.
+set(RT64_UPSCALED_RECT_LAST_TEXEL ON)
 # Up to four players, each a port of their own (src/main/main.cpp, get_connected_device_info): the game turns
 # RecompFrontend's single-player mode off, and plays as single-player mode until players are assigned, as with
 # Emscripten, so a player alone needn't assign their pad or keyboard first. And until then each pad plays a port of its

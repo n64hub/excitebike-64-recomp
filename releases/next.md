@@ -1,0 +1,4 @@
+- The place in the top right (3RD, 6TH) no longer draws thin white lines down its right side and along its bottom while it grows and shrinks as your place changes (#88)
+- Original Excitebike, under Special Tracks, scrolls its playfield whole: no band of the track sliding back and forth by a tile, and no shimmer at the picture's top right, between the game's own frames (#87)
+- In Hill Climb, the race time no longer has stray white and yellow dashes under "Time:" and its 0s in the countdown, its digits no longer jump up and down just after GO, and its letters no longer have a thin line down their left side in a wide window (#68)
+- Original Excitebike's letters no longer have some of their columns drawn double or a column late at high resolutions, such as 4096x2160
