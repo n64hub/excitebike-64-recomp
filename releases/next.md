@@ -1,0 +1,1 @@
+- The place in the top right (3RD, 6TH) no longer draws thin white lines down its right side and along its bottom while it grows and shrinks as your place changes (#88)

@@ -127,6 +127,13 @@ set(RT64_MOVE_UNPAIRED_WITH_CAMERA ON)
 # HUD (#62). RT64_RECT_OWN_PIXEL_GRID (off on a desktop build and on with Emscripten) steps a texrect's texture from its
 # own edges at its own scale.
 set(RT64_RECT_OWN_PIXEL_GRID ON)
+# The place in the top right (3RD, 6TH) grows and shrinks as it changes, its glyphs drawn as rects that step over more
+# texels a pixel than they cover. RT64 draws such a scaled rect upscaled (Upscale 2D), and its last native pixel at a
+# high resolution stepped a pixel past the last texel the console samples, into the next glyph on the font page: a thin
+# white line down each glyph's right and along its bottom while the place changed (#88).
+# RT64_UPSCALED_RECT_LAST_TEXEL (off on a desktop build and on with Emscripten) keeps an upscaled rect to the texels
+# the console samples.
+set(RT64_UPSCALED_RECT_LAST_TEXEL ON)
 # Up to four players, each a port of their own (src/main/main.cpp, get_connected_device_info): the game turns
 # RecompFrontend's single-player mode off, and plays as single-player mode until players are assigned, as with
 # Emscripten, so a player alone needn't assign their pad or keyboard first. And until then each pad plays a port of its
