@@ -7,11 +7,25 @@
 // that can be well inside the fog: a slab of ground or a row of fences popping in ahead, or at a wide window's sides,
 // which the 4:3 lists never thought of.
 //
-// With Far, tube_update_view (copied here as it is but for the call) adds after the game's cull every other section
-// ahead of the camera, before the far clip (gFarClip, in the same units) and within the view by the game's own test
-// (sCullSlope, which src/game/widescreen.cpp's hook in tube_cull_sections has widened with the view), as far: drawn
-// under the fog with tube_draw_far's viewport, which shares the near one's depth range, so they sort with the rest.
+// The game's projection ends at the far clip (gFarClip, in the same units), which tube_init sets to 8000 (128 m) on
+// every outdoor track. Past it a section's ground and its rocks and cliffs are cut off along a straight line, with the
+// sky's backdrop behind, and that cut moving towards the camera, not a section appearing, is the scenery popping in
+// over a crest. The game's fog is about three quarters thick there.
+//
+// With Far, tube_update_view (copied here as it is but for the calls) moves the far clip to FAR_CLIP (22135, 354 m),
+// and adds after the game's cull every other section ahead of the camera, before the far clip and within the view by
+// the game's own test (sCullSlope, which src/game/widescreen.cpp's hook in tube_cull_sections has widened with the
+// view), as far: drawn under the fog with tube_draw_far's viewport, which shares the near one's depth range, so they
+// sort with the rest.
 // The objects and water on them follow their section as the game's do.
+//
+// The fog's positions (sTubeFogNear and sTubeFogFar) are depths as the projection gives them: a point D ahead is at
+// 1000 f/(f-50) (1 - 50/D) for a far clip f and the near one at 50, 1000 at the far clip. So after the cull, which
+// reads them at the game's scale, Far scales them by (f'/(f'-50)) / (8000/7950) to keep the fog at the same distances.
+// At FAR_CLIP that takes 4.00 off a position near 1000 (997 and 1001 at Canyon Chasm's crest), so the rounding
+// moves it by almost nothing; the far viewport's projection, 2 units further out (render_draw_race), puts its fog
+// 0.16 nearer. The fog is whole by about 9500 (152 m), so what was cut off at 8000 fades into it as everything nearer
+// does.
 //
 // The models' matrices come from a pool of TUBE_MTX_POOL (300) a frame, which every view shares, and getmtx draws
 // nothing once it runs out, the near pass last. So the sections added are the nearest first, and only while the view's
@@ -50,6 +64,11 @@ s32 eb_draw_far(void);
 #define gCamPos ((Vec3i *)0x800E8A30)
 #define gGroundFound (*(s32 *)0x800E8EA8)
 #define gCurTrack (*(u32 *)0x800F0704)
+
+// The far clip with Far, and the game's own on these tracks (tube_init) and its near clip.
+#define FAR_CLIP 22135
+#define CONSOLE_FAR_CLIP 8000
+#define NEAR_CLIP 50
 
 // The sections this file can count; a track with more is left as the game has it.
 #define MAX_SECTIONS 1024
@@ -198,8 +217,17 @@ static void add_far_sections(TrackModelList *sections, s32 view) {
     }
 }
 
-/* Culls the sections for a view, then gives each object and water model the view bits of its section (whose index
-   is in the high half of its mask). */
+// A fog position at FAR_CLIP for the game's at CONSOLE_FAR_CLIP, at the same distance (above).
+static s32 far_fog(s32 position) {
+    const f32 scale = ((f32)FAR_CLIP / (FAR_CLIP - NEAR_CLIP)) /
+                      ((f32)CONSOLE_FAR_CLIP / (CONSOLE_FAR_CLIP - NEAR_CLIP));
+    f32 scaled = position * scale;
+    return (s32)(scaled < 0.0f ? scaled - 0.5f : scaled + 0.5f);
+}
+
+/* Culls the sections for a view (with Far, moving the far clip, adding sections and moving the fog to match, above),
+   then gives each object and water model the view bits of its section (whose index is in the high half of its
+   mask). */
 RECOMP_PATCH void tube_update_view(s32 view) {
     u32 i;
     TrackModel *model;
@@ -207,7 +235,12 @@ RECOMP_PATCH void tube_update_view(s32 view) {
     tube_calc_fog_range(view, &sTubeFogNear[view], &sTubeFogFar[view]);
     tube_cull_sections(gTrackSections, view);
     if (eb_draw_far()) {
+        gFarClip = FAR_CLIP;
         add_far_sections(gTrackSections, view);
+        sTubeFogNear[view] = far_fog(sTubeFogNear[view]);
+        sTubeFogFar[view] = far_fog(sTubeFogFar[view]);
+    } else {
+        gFarClip = CONSOLE_FAR_CLIP;
     }
     for (i = 0; i < gTrackObjects->count; i++) {
         model = &gTrackObjects->e[i];
