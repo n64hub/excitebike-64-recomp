@@ -64,8 +64,9 @@ void eb::init_config() {
         draw_distance_id,
         "Draw Distance",
         "How far the track is drawn. <recomp-color primary>Far</recomp-color>: in a stadium all of it in sight, lit as "
-        "the near track is, and outdoors the ground, fences, banners and trees ahead out to the far clip, without the "
-        "pieces that pop in as you ride. <recomp-color primary>Original</recomp-color>: as a console draws it, the "
+        "the near track is, and outdoors the ground, fences, banners, trees, rocks and cliffs ahead nearly three "
+        "times as far, fading into the fog where the game cuts them off, without the pieces that pop in as you ride. "
+        "<recomp-color primary>Original</recomp-color>: as a console draws it, the "
         "stadium's jumps and walls past a distance in its black fog and the farthest left out, and outdoors only what "
         "the track's own tables name for where the camera is.",
         {{DrawDistance::Original, "Original"}, {DrawDistance::Far, "Far"}},
