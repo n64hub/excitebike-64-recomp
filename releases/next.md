@@ -1,0 +1,1 @@
+- With Draw Distance on Far, the rocks and canyon walls ahead on the outdoor tracks no longer pop in at a straight edge over a crest, as they did with Original too: they are drawn nearly three times as far and fade into the fog as everything nearer does (#63)
