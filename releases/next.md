@@ -1,0 +1,1 @@
+- On Windows, the sky behind the outdoor tracks is drawn whole again, not as flat horizontal bands, the minimap in the top left shows the track's outline again, and the place in the top right and the dust behind the bikes are back: the Windows builds of v0.1.24 and v0.1.25 lost them (#99, #100)
